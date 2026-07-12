@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tabungan — Catatan Keuangan Pribadi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D2818;
+    --bg-panel:#123420;
+    --bg-panel-2:#153A25;
+    --ivory:#F5F1E4;
+    --ivory-dim:rgba(245,241,228,0.62);
+    --gold:#C9A227;
+    --gold-soft:rgba(201,162,39,0.16);
+    --sage:#8FA895;
+    --coral:#C1666B;
+    --coral-soft:rgba(193,102,107,0.16);
+    --line:rgba(245,241,228,0.12);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, #16452A 0%, transparent 45%),
+      radial-gradient(circle at 100% 10%, #0F3320 0%, transparent 40%),
+      var(--bg);
+    color:var(--ivory);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:32px 20px 60px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  /* Header */
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap;}
+  .brand-eyebrow{font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--sage);font-weight:600;margin:0 0 6px;}
+  h1{font-family:'Fraunces',serif;font-weight:500;font-size:38px;margin:0;letter-spacing:-0.01em;}
+  .conn-status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ivory-dim);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 3px var(--coral-soft);}
+  .dot.on{background:var(--sage);box-shadow:0 0 0 3px rgba(143,168,149,0.2);}
+
+  /* Grid */
+  .grid{display:grid;grid-template-columns:1.1fr 1.4fr;gap:20px;}
+  @media(max-width:820px){.grid{grid-template-columns:1fr;}}
+
+  .card{
+    background:linear-gradient(180deg,var(--bg-panel-2),var(--bg-panel));
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:24px;
+  }
+
+  /* Summary + ring */
+  .summary-top{display:flex;align-items:center;gap:22px;}
+  .ring-wrap{position:relative;width:132px;height:132px;flex:none;}
+  .ring-wrap svg{transform:rotate(-90deg);}
+  .ring-track{fill:none;stroke:rgba(245,241,228,0.1);stroke-width:10;}
+  .ring-fill{fill:none;stroke:var(--gold);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1);}
+  .ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ring-pct{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;}
+  .ring-sub{font-size:10px;color:var(--ivory-dim);letter-spacing:0.05em;}
+
+  .saldo-label{font-size:12px;color:var(--ivory-dim);text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;}
+  .saldo-value{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:600;color:var(--gold);margin:0;}
+  .goal-line{font-size:12.5px;color:var(--ivory-dim);margin-top:4px;}
+  .goal-line button{background:none;border:none;color:var(--sage);text-decoration:underline;cursor:pointer;font-size:12.5px;padding:0;font-family:inherit;}
+
+  .stat-pair{display:flex;gap:12px;margin-top:20px;}
+  .stat-box{flex:1;background:rgba(245,241,228,0.04);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .stat-box .lab{font-size:11px;color:var(--ivory-dim);text-transform:uppercase;letter-spacing:0.06em;}
+  .stat-box .val{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;margin-top:4px;}
+  .stat-box.in .val{color:var(--sage);}
+  .stat-box.out .val{color:var(--coral);}
+
+  /* Settings */
+  details.settings{margin-top:18px;border-top:1px dashed var(--line);padding-top:16px;}
+  summary{cursor:pointer;font-size:13px;color:var(--sage);font-weight:600;list-style:none;}
+  summary::-webkit-details-marker{display:none;}
+  .settings-body{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
+  label{font-size:12px;color:var(--ivory-dim);}
+  input[type=text],input[type=number],input[type=date]{
+    width:100%;background:rgba(245,241,228,0.06);border:1px solid var(--line);border-radius:10px;
+    color:var(--ivory);padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;outline:none;
+  }
+  input:focus{border-color:var(--gold);}
+  .btn{
+    border:none;border-radius:10px;padding:10px 16px;font-family:'Inter',sans-serif;font-weight:600;
+    font-size:13.5px;cursor:pointer;transition:transform .15s ease, opacity .15s ease;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-gold{background:var(--gold);color:#1A1204;}
+  .btn-ghost{background:rgba(245,241,228,0.08);color:var(--ivory);}
+  .btn-ghost:hover{background:rgba(245,241,228,0.14);}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  /* Form */
+  .form-title{font-family:'Fraunces',serif;font-size:19px;margin:0 0 16px;font-weight:500;}
+  .field{margin-bottom:12px;}
+  .toggle-row{display:flex;gap:8px;margin-bottom:14px;}
+  .toggle{
+    flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid var(--line);
+    cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ivory-dim);background:rgba(245,241,228,0.03);
+  }
+  .toggle.active-in{background:var(--gold-soft);border-color:var(--gold);color:var(--gold);}
+  .toggle.active-out{background:var(--coral-soft);border-color:var(--coral);color:var(--coral);}
+  .form-msg{font-size:12.5px;margin-top:10px;min-height:16px;}
+  .form-msg.err{color:var(--coral);}
+  .form-msg.ok{color:var(--sage);}
+
+  /* History */
+  .hist-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:left;color:var(--ivory-dim);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;padding:0 10px 10px;border-bottom:1px solid var(--line);}
+  td{padding:11px 10px;border-bottom:1px solid var(--line);}
+  tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge.setor{background:var(--gold-soft);color:var(--gold);}
+  .badge.tarik{background:var(--coral-soft);color:var(--coral);}
+  .amt{font-family:'JetBrains Mono',monospace;text-align:right;}
+  .amt.setor{color:var(--sage);}
+  .amt.tarik{color:var(--coral);}
+  .empty-state{text-align:center;padding:36px 10px;color:var(--ivory-dim);font-size:13.5px;}
+  .hist-scroll{max-height:360px;overflow-y:auto;}
+  .hist-scroll::-webkit-scrollbar{width:6px;}
+  .hist-scroll::-webkit-scrollbar-thumb{background:rgba(245,241,228,0.15);border-radius:6px;}
+
+  footer{text-align:center;margin-top:28px;font-size:11.5px;color:var(--ivory-dim);}
+  footer code{background:rgba(245,241,228,0.06);padding:2px 6px;border-radius:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="brand-eyebrow">Catatan Keuangan Pribadi</p>
+      <h1>Tabungan</h1>
+    </div>
+    <div class="conn-status">
+      <span class="dot" id="connDot"></span>
+      <span id="connText">Belum terhubung ke Google Sheets</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: Summary + Settings + Form -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <div class="card">
+        <div class="summary-top">
+          <div class="ring-wrap">
+            <svg width="132" height="132" viewBox="0 0 132 132">
+              <circle class="ring-track" cx="66" cy="66" r="56"></circle>
+              <circle class="ring-fill" id="ringFill" cx="66" cy="66" r="56"
+                stroke-dasharray="351.86" stroke-dashoffset="351.86"></circle>
+            </svg>
+            <div class="ring-label">
+              <div class="ring-pct" id="ringPct">0%</div>
+              <div class="ring-sub">DARI TARGET</div>
+            </div>
+          </div>
+          <div>
+            <p class="saldo-label">Saldo saat ini</p>
+            <p class="saldo-value" id="saldoValue">Rp 0</p>
+            <p class="goal-line">Target: <span id="goalDisplay">Rp 0</span> · <button id="editGoalBtn">ubah</button></p>
+          </div>
+        </div>
+
+        <div class="stat-pair">
+          <div class="stat-box in"><div class="lab">Total setor</div><div class="val" id="totalIn">Rp 0</div></div>
+          <div class="stat-box out"><div class="lab">Total tarik</div><div class="val" id="totalOut">Rp 0</div></div>
+        </div>
+
+        <details class="settings">
+          <summary>⚙ Pengaturan koneksi Google Sheets</summary>
+          <div class="settings-body">
+            <div>
+              <label>URL Web App (Google Apps Script)</label>
+              <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+            </div>
+            <div>
+              <label>Target tabungan (Rp)</label>
+              <input type="number" id="goalInput" placeholder="10000000">
+            </div>
+            <button class="btn btn-gold" id="connectBtn">Simpan &amp; Hubungkan</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <p class="form-title">Tambah transaksi</p>
+        <div class="toggle-row">
+          <div class="toggle active-in" id="toggleSetor">↓ Dana Masuk</div>
+          <div class="toggle" id="toggleTarik">↑ Dana Out</div>
+        </div>
+        <div class="field">
+          <label>Jumlah (Rp)</label>
+          <input type="number" id="fJumlah" placeholder="100000">
+        </div>
+        <button class="btn btn-gold" id="saveBtn" style="width:100%;">Simpan transaksi</button>
+        <div class="form-msg" id="formMsg"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: History -->
+    <div class="card">
+      <div class="hist-head">
+        <p class="form-title" style="margin:0;">Riwayat transaksi</p>
+        <button class="btn btn-ghost" id="refreshBtn">↻ Segarkan</button>
+      </div>
+      <div class="hist-scroll">
+        <table>
+          <thead>
+            <tr><th>No</th><th>Dana Masuk</th><th>Dana Out</th><th style="text-align:right;">Saldo Akhir</th></tr>
+          </thead>
+          <tbody id="histBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState">Belum ada transaksi. Hubungkan Google Sheets lalu tambahkan transaksi pertamamu.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Data disimpan di Google Sheets milikmu sendiri. Belum diatur? Buka panel <code>⚙ Pengaturan</code> di atas untuk memasukkan URL Web App.
+  </footer>
+</div>
+
+<script>
+  // ---------- CONFIG ----------
+  // Kamu bisa langsung isi API_URL di sini supaya tidak perlu diketik tiap buka file,
+  // atau isi lewat panel "Pengaturan" di halaman (berlaku untuk sesi berjalan).
+  const CONFIG = {
+    API_URL: "", // <-- tempel URL Web App Google Apps Script kamu di sini, contoh: "https://script.google.com/macros/s/xxxx/exec"
+    GOAL: 10000000
+  };
+
+  const state = {
+    apiUrl: CONFIG.API_URL,
+    goal: CONFIG.GOAL,
+    jenis: "Setor",
+    rows: []
+  };
+
+  const el = id => document.getElementById(id);
+  const rupiah = n => "Rp " + Number(n || 0).toLocaleString("id-ID");
+
+  // ---------- Settings ----------
+  el("apiUrlInput").value = state.apiUrl;
+  el("goalInput").value = state.goal;
+
+  el("connectBtn").addEventListener("click", () => {
+    const url = el("apiUrlInput").value.trim();
+    const goal = Number(el("goalInput").value) || state.goal;
+    state.apiUrl = url;
+    state.goal = goal;
+    if (url) {
+      setConn(true);
+      loadData();
+    } else {
+      setConn(false);
+    }
+  });
+
+  el("editGoalBtn").addEventListener("click", () => {
+    document.querySelector(".settings").open = true;
+    el("goalInput").focus();
+  });
+
+  function setConn(ok) {
+    el("connDot").classList.toggle("on", ok);
+    el("connText").textContent = ok ? "Terhubung ke Google Sheets" : "Belum terhubung ke Google Sheets";
+  }
+
+  // ---------- Toggle jenis ----------
+  el("toggleSetor").addEventListener("click", () => {
+    state.jenis = "masuk";
+    el("toggleSetor").classList.add("active-in");
+    el("toggleTarik").classList.remove("active-out");
+  });
+  el("toggleTarik").addEventListener("click", () => {
+    state.jenis = "keluar";
+    el("toggleTarik").classList.add("active-out");
+    el("toggleSetor").classList.remove("active-in");
+  });
+
+  // ---------- Save transaction ----------
+  el("saveBtn").addEventListener("click", async () => {
+    const jumlah = Number(el("fJumlah").value);
+    const msg = el("formMsg");
+
+    if (!jumlah || jumlah <= 0) {
+      msg.textContent = "Isi jumlah yang valid.";
+      msg.className = "form-msg err";
+      return;
+    }
+    if (!state.apiUrl) {
+      msg.textContent = "Hubungkan ke Google Sheets dulu lewat panel Pengaturan.";
+      msg.className = "form-msg err";
+      return;
+    }
+
+    el("saveBtn").disabled = true;
+    msg.textContent = "Menyimpan...";
+    msg.className = "form-msg";
+
+    const payload = state.jenis === "masuk"
+      ? { masuk: jumlah, keluar: 0 }
+      : { masuk: 0, keluar: jumlah };
+
+    try {
+      await fetch(state.apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      msg.textContent = "Tersimpan.";
+      msg.className = "form-msg ok";
+      el("fJumlah").value = "";
+      await loadData();
+    } catch (e) {
+      msg.textContent = "Gagal menyimpan. Cek URL Web App dan koneksi internet.";
+      msg.className = "form-msg err";
+    } finally {
+      el("saveBtn").disabled = false;
+    }
+  });
+
+  // ---------- Load data ----------
+  el("refreshBtn").addEventListener("click", loadData);
+
+  async function loadData() {
+    if (!state.apiUrl) return;
+    try {
+      const res = await fetch(state.apiUrl);
+      const json = await res.json();
+      state.saldoAwal = Number(json.saldoAwal) || 0;
+      state.rows = (json.data || []).map(r => ({
+        no: r.no,
+        masuk: Number(r.masuk) || 0,
+        keluar: Number(r.keluar) || 0,
+        saldoAkhir: Number(r.saldoAkhir) || 0
+      })).sort((a, b) => b.no - a.no);
+      setConn(true);
+      render();
+    } catch (e) {
+      setConn(false);
+    }
+  }
+
+  function render() {
+    const body = el("histBody");
+    const empty = el("emptyState");
+    body.innerHTML = "";
+
+    if (state.rows.length === 0) {
+      empty.style.display = "block";
+    } else {
+      empty.style.display = "none";
+      state.rows.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.no}</td>
+          <td class="amt setor">${r.masuk ? "+ " + rupiah(r.masuk) : "-"}</td>
+          <td class="amt tarik">${r.keluar ? "- " + rupiah(r.keluar) : "-"}</td>
+          <td class="amt">${rupiah(r.saldoAkhir)}</td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    const totalIn = state.rows.reduce((s, r) => s + r.masuk, 0);
+    const totalOut = state.rows.reduce((s, r) => s + r.keluar, 0);
+    const saldo = state.rows.length > 0 ? state.rows[0].saldoAkhir : (state.saldoAwal || 0);
+
+    el("totalIn").textContent = rupiah(totalIn);
+    el("totalOut").textContent = rupiah(totalOut);
+    el("saldoValue").textContent = rupiah(saldo);
+    el("goalDisplay").textContent = rupiah(state.goal);
+
+    const pct = Math.max(0, Math.min(1, saldo / (state.goal || 1)));
+    const circumference = 351.86;
+    el("ringFill").style.strokeDashoffset = circumference - pct * circumference;
+    el("ringPct").textContent = Math.round(pct * 100) + "%";
+  }
+
+  // Auto-connect if API_URL was pre-filled in CONFIG
+  if (state.apiUrl) {
+    setConn(true);
+    loadData();
+  }
+</script>
+</body>
+</html>
