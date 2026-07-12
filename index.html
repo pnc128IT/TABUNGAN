@@ -77,9 +77,11 @@
   .stat-box.out .val{color:var(--coral);}
 
   /* Settings */
-  details.settings{margin-top:18px;border-top:1px dashed var(--line);padding-top:16px;}
-  summary{cursor:pointer;font-size:13px;color:var(--sage);font-weight:600;list-style:none;}
-  summary::-webkit-details-marker{display:none;}
+  .settings-toggle{
+    width:100%;text-align:left;background:none;border:none;border-top:1px dashed var(--line);
+    margin-top:18px;padding:16px 0 0;cursor:pointer;font-size:13px;color:var(--sage);font-weight:600;
+    font-family:'Inter',sans-serif;
+  }
   .settings-body{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
   label{font-size:12px;color:var(--ivory-dim);}
   input[type=text],input[type=number],input[type=date]{
@@ -175,20 +177,18 @@
           <div class="stat-box out"><div class="lab">Total tarik</div><div class="val" id="totalOut">Rp 0</div></div>
         </div>
 
-        <details class="settings">
-          <summary>⚙ Pengaturan koneksi Google Sheets</summary>
-          <div class="settings-body">
-            <div>
-              <label>URL Web App (Google Apps Script)</label>
-              <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
-            </div>
-            <div>
-              <label>Target tabungan (Rp)</label>
-              <input type="number" id="goalInput" placeholder="10000000">
-            </div>
-            <button class="btn btn-gold" id="connectBtn">Simpan &amp; Hubungkan</button>
+        <button type="button" class="settings-toggle" id="settingsToggle">⚙ Pengaturan koneksi Google Sheets ▾</button>
+        <div class="settings-body" id="settingsBody" style="display:none;">
+          <div>
+            <label>URL Web App (Google Apps Script)</label>
+            <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
           </div>
-        </details>
+          <div>
+            <label>Target tabungan (Rp)</label>
+            <input type="number" id="goalInput" placeholder="10000000">
+          </div>
+          <button class="btn btn-gold" id="connectBtn">Simpan &amp; Hubungkan</button>
+        </div>
       </div>
 
       <div class="card">
@@ -234,7 +234,7 @@
   // Kamu bisa langsung isi API_URL di sini supaya tidak perlu diketik tiap buka file,
   // atau isi lewat panel "Pengaturan" di halaman (berlaku untuk sesi berjalan).
   const CONFIG = {
-    API_URL: "", // <-- tempel URL Web App Google Apps Script kamu di sini, contoh: "https://script.google.com/macros/s/xxxx/exec"
+    API_URL: "", // <-- tempel URL Web App Google Apps Script kamu di sini, contoh: "https://script.google.com/macros/s/AKfycbz_kksg1x9oq_G2EwEk5MdsS8BxiAkCd3q8ggK-Qvhy/dev"
     GOAL: 10000000
   };
 
@@ -249,6 +249,13 @@
   const rupiah = n => "Rp " + Number(n || 0).toLocaleString("id-ID");
 
   // ---------- Settings ----------
+  // ---------- Settings toggle ----------
+  el("settingsToggle").addEventListener("click", () => {
+    const body = el("settingsBody");
+    const isOpen = body.style.display !== "none";
+    body.style.display = isOpen ? "none" : "flex";
+  });
+
   el("apiUrlInput").value = state.apiUrl;
   el("goalInput").value = state.goal;
 
@@ -266,7 +273,7 @@
   });
 
   el("editGoalBtn").addEventListener("click", () => {
-    document.querySelector(".settings").open = true;
+    el("settingsBody").style.display = "flex";
     el("goalInput").focus();
   });
 
