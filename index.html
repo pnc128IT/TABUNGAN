@@ -1,485 +1,194 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
-    <meta charset="UTF-8">
-    <title>SINYAL — Ruang Obrolan Terkunci</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0a0f1c;
-            --panel: #111a2c;
-            --panel-2: #16213a;
-            --line: #223050;
-            --text: #e7ecf3;
-            --muted: #7c8aa8;
-            --amber: #f2a93b;
-            --mint: #59d9b3;
-            --danger: #e5484d;
-        }
+<meta charset="UTF-8">
+<title>SINYAL — Ruang Obrolan Terkunci</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0f1c;
+    --panel: #111a2c;
+    --panel-2: #16213a;
+    --line: #223050;
+    --text: #e7ecf3;
+    --muted: #7c8aa8;
+    --amber: #f2a93b;
+    --mint: #59d9b3;
+    --danger: #e5484d;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(circle at 20% 0%, #0d1526 0%, #080c16 60%), var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px;
+  }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  .app{ width:100%; max-width:460px; }
 
-        * {
-            box-sizing: border-box;
-        }
+  /* ---------- Signature: signal bars ---------- */
+  .brand{ display:flex; align-items:center; gap:12px; margin-bottom: 28px; }
+  .bars{ display:flex; align-items:flex-end; gap:3px; height:22px; }
+  .bars span{
+    width:4px; background: var(--amber); border-radius:2px;
+    animation: pulse 1.4s ease-in-out infinite;
+    opacity:.85;
+  }
+  .bars span:nth-child(1){height:6px; animation-delay:0s;}
+  .bars span:nth-child(2){height:12px; animation-delay:.15s;}
+  .bars span:nth-child(3){height:18px; animation-delay:.3s;}
+  .bars span:nth-child(4){height:12px; animation-delay:.45s;}
+  .bars span:nth-child(5){height:22px; animation-delay:.6s;}
+  @keyframes pulse{ 0%,100%{ transform:scaleY(.5); opacity:.5;} 50%{ transform:scaleY(1); opacity:1;} }
+  .brand-text{ letter-spacing:.14em; font-weight:800; font-size:15px; }
+  .brand-sub{ color:var(--muted); font-size:11px; letter-spacing:.12em; margin-top:2px; }
 
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-        }
+  /* ---------- Login panel ---------- */
+  .panel{
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    position:relative;
+    overflow:hidden;
+  }
+  .panel::before{
+    content:"";
+    position:absolute; inset:0 0 auto 0; height:2px;
+    background: linear-gradient(90deg, transparent, var(--amber), transparent);
+  }
+  .eyebrow{
+    font-size:11px; letter-spacing:.18em; color:var(--muted); text-transform:uppercase;
+    margin-bottom: 6px;
+  }
+  h1{ font-size:20px; margin:0 0 20px 0; font-weight:700; }
+  label{ display:block; font-size:11px; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; margin-bottom:6px; margin-top:16px;}
+  input{
+    width:100%; background:#0c1424; border:1px solid var(--line); color:var(--text);
+    padding:12px 14px; border-radius:8px; font-size:14px; font-family:'JetBrains Mono', monospace;
+    outline:none; transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus{ border-color: var(--amber); box-shadow: 0 0 0 3px rgba(242,169,59,.15); }
+  .row{ display:flex; gap:10px; }
+  .row > div{ flex:1; }
+  button{
+    width:100%; margin-top:22px; padding:13px; border-radius:8px; border:none;
+    background: var(--amber); color:#181008; font-weight:700; font-size:14px;
+    cursor:pointer; letter-spacing:.03em; transition: filter .15s, transform .1s;
+    font-family:'JetBrains Mono', monospace;
+  }
+  button:hover{ filter:brightness(1.08); }
+  button:active{ transform: translateY(1px); }
+  button:disabled{ opacity:.6; cursor:not-allowed; }
+  .hint{ color:var(--muted); font-size:12px; margin-top:14px; line-height:1.5; }
+  .error{
+    margin-top:14px; padding:10px 12px; border-radius:8px; font-size:12.5px;
+    background: rgba(229,72,77,.12); border:1px solid rgba(229,72,77,.35); color:#ff9a9d;
+    display:none;
+  }
+  .error.show{ display:block; }
 
-        body {
-            background: radial-gradient(circle at 20% 0%, #0d1526 0%, #080c16 60%), var(--bg);
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-        }
+  /* ---------- Chat screen ---------- */
+  .chat-wrap{ display:none; width:100%; max-width:560px; height:82vh; flex-direction:column; }
+  .chat-header{
+    display:flex; align-items:center; justify-content:space-between;
+    background: var(--panel); border:1px solid var(--line); border-bottom:none;
+    border-radius:14px 14px 0 0; padding:14px 18px;
+  }
+  .status{ display:flex; align-items:center; gap:10px; }
+  .dot{ width:8px; height:8px; border-radius:50%; background:var(--mint); box-shadow:0 0 8px var(--mint); animation: blink 2s infinite; }
+  @keyframes blink{ 50%{ opacity:.4; } }
+  .status-text{ font-size:12px; letter-spacing:.08em; color:var(--muted); }
+  .status-text b{ color:var(--text); }
+  .logout{ background:none; border:1px solid var(--line); color:var(--muted); width:auto; margin:0; padding:7px 12px; font-size:11px; border-radius:7px; }
+  .logout:hover{ color:var(--text); border-color:var(--amber); filter:none; }
 
-        .mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
+  .feed{
+    flex:1; overflow-y:auto; background:#0b1220; border:1px solid var(--line); border-top:none; border-bottom:none;
+    padding: 16px 18px; display:flex; flex-direction:column; gap:12px;
+  }
+  .feed::-webkit-scrollbar{ width:8px; }
+  .feed::-webkit-scrollbar-thumb{ background: var(--line); border-radius:8px; }
 
-        .app {
-            width: 100%;
-            max-width: 460px;
-        }
+  .msg{ max-width:78%; }
+  .msg .meta{ font-size:10.5px; color:var(--muted); letter-spacing:.06em; margin-bottom:3px; display:flex; gap:8px; }
+  .msg .bubble{ background: var(--panel-2); border:1px solid var(--line); padding:9px 12px; border-radius:10px; font-size:14px; line-height:1.45; word-wrap:break-word; }
+  .msg.me{ align-self:flex-end; }
+  .msg.me .bubble{ background: rgba(89,217,179,.12); border-color: rgba(89,217,179,.35); }
+  .msg.me .meta{ justify-content:flex-end; }
+  .msg .callsign{ font-weight:700; }
+  .msg.me .callsign{ color: var(--mint); }
+  .msg:not(.me) .callsign{ color: var(--amber); }
 
-        /* ---------- Signature: signal bars ---------- */
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 28px;
-        }
+  .empty{ margin:auto; text-align:center; color:var(--muted); font-size:13px; padding:20px; }
+  .empty .mono{ display:block; font-size:11px; margin-top:6px; letter-spacing:.1em; }
 
-        .bars {
-            display: flex;
-            align-items: flex-end;
-            gap: 3px;
-            height: 22px;
-        }
+  .composer{
+    display:flex; gap:8px; background: var(--panel); border:1px solid var(--line); border-radius:0 0 14px 14px; padding:12px;
+  }
+  .composer input{ flex:1; }
+  .composer button{ width:auto; margin:0; padding:0 18px; }
 
-        .bars span {
-            width: 4px;
-            background: var(--amber);
-            border-radius: 2px;
-            animation: pulse 1.4s ease-in-out infinite;
-            opacity: .85;
-        }
-
-        .bars span:nth-child(1) {
-            height: 6px;
-            animation-delay: 0s;
-        }
-
-        .bars span:nth-child(2) {
-            height: 12px;
-            animation-delay: .15s;
-        }
-
-        .bars span:nth-child(3) {
-            height: 18px;
-            animation-delay: .3s;
-        }
-
-        .bars span:nth-child(4) {
-            height: 12px;
-            animation-delay: .45s;
-        }
-
-        .bars span:nth-child(5) {
-            height: 22px;
-            animation-delay: .6s;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scaleY(.5);
-                opacity: .5;
-            }
-
-            50% {
-                transform: scaleY(1);
-                opacity: 1;
-            }
-        }
-
-        .brand-text {
-            letter-spacing: .14em;
-            font-weight: 800;
-            font-size: 15px;
-        }
-
-        .brand-sub {
-            color: var(--muted);
-            font-size: 11px;
-            letter-spacing: .12em;
-            margin-top: 2px;
-        }
-
-        /* ---------- Login panel ---------- */
-        .panel {
-            background: linear-gradient(180deg, var(--panel), var(--panel-2));
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 28px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .panel::before {
-            content: "";
-            position: absolute;
-            inset: 0 0 auto 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--amber), transparent);
-        }
-
-        .eyebrow {
-            font-size: 11px;
-            letter-spacing: .18em;
-            color: var(--muted);
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-
-        h1 {
-            font-size: 20px;
-            margin: 0 0 20px 0;
-            font-weight: 700;
-        }
-
-        label {
-            display: block;
-            font-size: 11px;
-            letter-spacing: .1em;
-            color: var(--muted);
-            text-transform: uppercase;
-            margin-bottom: 6px;
-            margin-top: 16px;
-        }
-
-        input {
-            width: 100%;
-            background: #0c1424;
-            border: 1px solid var(--line);
-            color: var(--text);
-            padding: 12px 14px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: 'JetBrains Mono', monospace;
-            outline: none;
-            transition: border-color .15s, box-shadow .15s;
-        }
-
-        input:focus {
-            border-color: var(--amber);
-            box-shadow: 0 0 0 3px rgba(242, 169, 59, .15);
-        }
-
-        .row {
-            display: flex;
-            gap: 10px;
-        }
-
-        .row>div {
-            flex: 1;
-        }
-
-        button {
-            width: 100%;
-            margin-top: 22px;
-            padding: 13px;
-            border-radius: 8px;
-            border: none;
-            background: var(--amber);
-            color: #181008;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            letter-spacing: .03em;
-            transition: filter .15s, transform .1s;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        button:hover {
-            filter: brightness(1.08);
-        }
-
-        button:active {
-            transform: translateY(1px);
-        }
-
-        button:disabled {
-            opacity: .6;
-            cursor: not-allowed;
-        }
-
-        .hint {
-            color: var(--muted);
-            font-size: 12px;
-            margin-top: 14px;
-            line-height: 1.5;
-        }
-
-        .error {
-            margin-top: 14px;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 12.5px;
-            background: rgba(229, 72, 77, .12);
-            border: 1px solid rgba(229, 72, 77, .35);
-            color: #ff9a9d;
-            display: none;
-        }
-
-        .error.show {
-            display: block;
-        }
-
-        /* ---------- Chat screen ---------- */
-        .chat-wrap {
-            display: none;
-            width: 100%;
-            max-width: 560px;
-            height: 82vh;
-            flex-direction: column;
-        }
-
-        .chat-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--panel);
-            border: 1px solid var(--line);
-            border-bottom: none;
-            border-radius: 14px 14px 0 0;
-            padding: 14px 18px;
-        }
-
-        .status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--mint);
-            box-shadow: 0 0 8px var(--mint);
-            animation: blink 2s infinite;
-        }
-
-        @keyframes blink {
-            50% {
-                opacity: .4;
-            }
-        }
-
-        .status-text {
-            font-size: 12px;
-            letter-spacing: .08em;
-            color: var(--muted);
-        }
-
-        .status-text b {
-            color: var(--text);
-        }
-
-        .logout {
-            background: none;
-            border: 1px solid var(--line);
-            color: var(--muted);
-            width: auto;
-            margin: 0;
-            padding: 7px 12px;
-            font-size: 11px;
-            border-radius: 7px;
-        }
-
-        .logout:hover {
-            color: var(--text);
-            border-color: var(--amber);
-            filter: none;
-        }
-
-        .feed {
-            flex: 1;
-            overflow-y: auto;
-            background: #0b1220;
-            border: 1px solid var(--line);
-            border-top: none;
-            border-bottom: none;
-            padding: 16px 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .feed::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .feed::-webkit-scrollbar-thumb {
-            background: var(--line);
-            border-radius: 8px;
-        }
-
-        .msg {
-            max-width: 78%;
-        }
-
-        .msg .meta {
-            font-size: 10.5px;
-            color: var(--muted);
-            letter-spacing: .06em;
-            margin-bottom: 3px;
-            display: flex;
-            gap: 8px;
-        }
-
-        .msg .bubble {
-            background: var(--panel-2);
-            border: 1px solid var(--line);
-            padding: 9px 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            line-height: 1.45;
-            word-wrap: break-word;
-        }
-
-        .msg.me {
-            align-self: flex-end;
-        }
-
-        .msg.me .bubble {
-            background: rgba(89, 217, 179, .12);
-            border-color: rgba(89, 217, 179, .35);
-        }
-
-        .msg.me .meta {
-            justify-content: flex-end;
-        }
-
-        .msg .callsign {
-            font-weight: 700;
-        }
-
-        .msg.me .callsign {
-            color: var(--mint);
-        }
-
-        .msg:not(.me) .callsign {
-            color: var(--amber);
-        }
-
-        .empty {
-            margin: auto;
-            text-align: center;
-            color: var(--muted);
-            font-size: 13px;
-            padding: 20px;
-        }
-
-        .empty .mono {
-            display: block;
-            font-size: 11px;
-            margin-top: 6px;
-            letter-spacing: .1em;
-        }
-
-        .composer {
-            display: flex;
-            gap: 8px;
-            background: var(--panel);
-            border: 1px solid var(--line);
-            border-radius: 0 0 14px 14px;
-            padding: 12px;
-        }
-
-        .composer input {
-            flex: 1;
-        }
-
-        .composer button {
-            width: auto;
-            margin: 0;
-            padding: 0 18px;
-        }
-
-        @media (max-width: 480px) {
-            .panel {
-                padding: 22px;
-            }
-
-            .chat-wrap {
-                height: 88vh;
-            }
-        }
-    </style>
+  @media (max-width: 480px){
+    .panel{ padding:22px; }
+    .chat-wrap{ height:88vh; }
+  }
+</style>
 </head>
-
 <body>
 
-    <div class="app" id="loginScreen">
-        <div class="brand">
-            <div class="bars"><span></span><span></span><span></span><span></span><span></span></div>
-            <div>
-                <div class="brand-text mono">SINYAL</div>
-                <div class="brand-sub mono">RUANG OBROLAN TERKUNCI</div>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="eyebrow mono">AKSES MASUK</div>
-            <h1>Masuk dengan ID &amp; Password</h1>
-
-            <label class="mono" for="idInput">ID Pengguna</label>
-            <input id="idInput" class="mono" type="text" placeholder="mis. budi92" autocomplete="off">
-
-            <label class="mono" for="passInput">Password</label>
-            <input id="passInput" class="mono" type="password" placeholder="••••••••" autocomplete="off">
-
-            <div class="error mono" id="errorBox"></div>
-
-            <button id="loginBtn" class="mono">MASUK / DAFTAR</button>
-            <div class="hint">ID baru akan otomatis terdaftar dengan password yang kamu masukkan. ID yang sudah ada
-                wajib memakai password yang sama untuk masuk kembali. Semua pengguna yang login masuk ke ruang obrolan
-                yang sama.</div>
-        </div>
+<div class="app" id="loginScreen">
+  <div class="brand">
+    <div class="bars"><span></span><span></span><span></span><span></span><span></span></div>
+    <div>
+      <div class="brand-text mono">SINYAL</div>
+      <div class="brand-sub mono">RUANG OBROLAN TERKUNCI</div>
     </div>
+  </div>
 
-    <div class="chat-wrap" id="chatScreen">
-        <div class="chat-header">
-            <div class="status">
-                <div class="dot"></div>
-                <div class="status-text mono">TERHUBUNG SEBAGAI <b id="whoAmI"></b></div>
-            </div>
-            <button class="logout mono" id="logoutBtn">KELUAR</button>
-        </div>
-        <div class="feed" id="feed">
-            <div class="empty mono">Belum ada transmisi.<span>KIRIM PESAN PERTAMA</span></div>
-        </div>
-        <div class="composer">
-            <input id="msgInput" class="mono" type="text" placeholder="Ketik pesan…" autocomplete="off">
-            <button id="sendBtn" class="mono">KIRIM</button>
-        </div>
+  <div class="panel">
+    <div class="eyebrow mono">AKSES MASUK</div>
+    <h1>Masuk dengan ID &amp; Password</h1>
+
+    <label class="mono" for="idInput">ID Pengguna</label>
+    <input id="idInput" class="mono" type="text" placeholder="mis. budi92" autocomplete="off">
+
+    <label class="mono" for="passInput">Password</label>
+    <input id="passInput" class="mono" type="password" placeholder="••••••••" autocomplete="off">
+
+    <div class="error mono" id="errorBox"></div>
+
+    <button id="loginBtn" class="mono">MASUK / DAFTAR</button>
+    <div class="hint">ID baru akan otomatis terdaftar dengan password yang kamu masukkan. ID yang sudah ada wajib memakai password yang sama untuk masuk kembali. Semua pengguna yang login masuk ke ruang obrolan yang sama.</div>
+  </div>
+</div>
+
+<div class="chat-wrap" id="chatScreen">
+  <div class="chat-header">
+    <div class="status">
+      <div class="dot"></div>
+      <div class="status-text mono">TERHUBUNG SEBAGAI <b id="whoAmI"></b></div>
     </div>
+    <button class="logout mono" id="logoutBtn">KELUAR</button>
+  </div>
+  <div class="feed" id="feed">
+    <div class="empty mono">Belum ada transmisi.<span>KIRIM PESAN PERTAMA</span></div>
+  </div>
+  <div class="composer">
+    <input id="msgInput" class="mono" type="text" placeholder="Ketik pesan…" autocomplete="off">
+    <button id="sendBtn" class="mono">KIRIM</button>
+  </div>
+</div>
 
-    <script>
-        (function(){
+<script>
+(function(){
   const USERS_KEY = 'sinyal-users';
   const MSG_KEY = 'sinyal-messages';
   const MAX_MESSAGES = 300;
@@ -530,6 +239,26 @@
     catch(e){ console.error('gagal menyimpan pesan', e); }
   }
 
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+  // Kirim pesan dengan aman: beberapa akun bisa mengirim di saat yang sama.
+  // Karena penyimpanan bersama pakai pola "ambil-lalu-simpan", tulisan yang
+  // hampir bersamaan bisa saling menimpa. Fungsi ini mengambil ulang data
+  // terbaru sebelum menyimpan, lalu memverifikasi pesan benar-benar tersimpan,
+  // dan mengulang beberapa kali bila ternyata tertimpa oleh akun lain.
+  async function appendMessageSafely(newMsg){
+    let attempts = 0;
+    while(attempts < 5){
+      const list = await getMessages();
+      if(!list.some(m => m.id === newMsg.id)) list.push(newMsg);
+      await saveMessages(list);
+      const check = await getMessages();
+      if(check.some(m => m.id === newMsg.id)) return true;
+      attempts++;
+    }
+    return false;
+  }
+
   function fmtTime(ts){
     const d = new Date(ts);
     return d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
@@ -545,7 +274,7 @@
     const wasAtBottom = feed.scrollTop + feed.clientHeight >= feed.scrollHeight - 40;
     feed.innerHTML = list.map(m => {
       const mine = m.sender === currentUser;
-      return `<div class="msg ${mine ? 'me' : ''}">
+      return `<div class="msg ${mine ? 'me' : ''}" data-id="${escapeHtml(m.id || '')}">
         <div class="meta"><span class="callsign">${escapeHtml(m.sender)}</span><span>${fmtTime(m.ts)}</span></div>
         <div class="bubble">${escapeHtml(m.text)}</div>
       </div>`;
@@ -614,14 +343,28 @@
     const text = msgInput.value.trim();
     if(!text || !currentUser) return;
     sendBtn.disabled = true;
-    const list = await getMessages();
-    list.push({ sender: currentUser, text: text, ts: Date.now() });
-    await saveMessages(list);
-    msgInput.value = '';
+    sendBtn.textContent = '…';
+    const newMsg = { id: uid(), sender: currentUser, text: text, ts: Date.now() };
+    const ok = await appendMessageSafely(newMsg);
+    if(!ok){
+      showComposerError('Pesan gagal terkirim, coba lagi.');
+    } else {
+      msgInput.value = '';
+    }
     lastRenderedCount = -1;
     await pollMessages();
     sendBtn.disabled = false;
+    sendBtn.textContent = 'KIRIM';
     msgInput.focus();
+  }
+
+  function showComposerError(text){
+    msgInput.style.borderColor = 'var(--danger)';
+    msgInput.placeholder = text;
+    setTimeout(() => {
+      msgInput.style.borderColor = '';
+      msgInput.placeholder = 'Ketik pesan…';
+    }, 2500);
   }
 
   function handleLogout(){
@@ -643,7 +386,6 @@
   msgInput.addEventListener('keydown', e => { if(e.key === 'Enter') handleSend(); });
   logoutBtn.addEventListener('click', handleLogout);
 })();
-    </script>
+</script>
 </body>
-
 </html>
