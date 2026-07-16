@@ -1,307 +1,727 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-<meta charset="UTF-8">
-<title>SINYAL — Obrolan Pribadi</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg: #0a0f1c;
-    --panel: #111a2c;
-    --panel-2: #16213a;
-    --line: #223050;
-    --text: #e7ecf3;
-    --muted: #7c8aa8;
-    --amber: #f2a93b;
-    --mint: #59d9b3;
-    --danger: #e5484d;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background: radial-gradient(circle at 20% 0%, #0d1526 0%, #080c16 60%), var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding: 24px;
-  }
-  .mono{ font-family:'JetBrains Mono', monospace; }
-  .app{ width:100%; max-width:460px; }
-  .hidden{ display:none !important; }
+    <meta charset="UTF-8">
+    <title>SINYAL — Obrolan Pribadi (Instan)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0f1c;
+            --panel: #111a2c;
+            --panel-2: #16213a;
+            --line: #223050;
+            --text: #e7ecf3;
+            --muted: #7c8aa8;
+            --amber: #f2a93b;
+            --mint: #59d9b3;
+            --danger: #e5484d;
+        }
 
-  /* ---------- fatal banner ---------- */
-  .fatal{
-    position:fixed; inset:0; background:rgba(5,8,16,.96); z-index:50;
-    display:flex; align-items:center; justify-content:center; padding:24px;
-  }
-  .fatal-box{
-    max-width:440px; background:var(--panel); border:1px solid var(--danger);
-    border-radius:14px; padding:26px; text-align:left;
-  }
-  .fatal-box h2{ color:#ff9a9d; font-size:16px; margin:0 0 10px 0; }
-  .fatal-box p{ color:var(--muted); font-size:13.5px; line-height:1.6; margin:0 0 8px 0; }
+        * {
+            box-sizing: border-box;
+        }
 
-  /* ---------- Signature: signal bars ---------- */
-  .brand{ display:flex; align-items:center; gap:12px; margin-bottom: 28px; }
-  .bars{ display:flex; align-items:flex-end; gap:3px; height:22px; }
-  .bars span{
-    width:4px; background: var(--amber); border-radius:2px;
-    animation: pulse 1.4s ease-in-out infinite;
-    opacity:.85;
-  }
-  .bars span:nth-child(1){height:6px; animation-delay:0s;}
-  .bars span:nth-child(2){height:12px; animation-delay:.15s;}
-  .bars span:nth-child(3){height:18px; animation-delay:.3s;}
-  .bars span:nth-child(4){height:12px; animation-delay:.45s;}
-  .bars span:nth-child(5){height:22px; animation-delay:.6s;}
-  @keyframes pulse{ 0%,100%{ transform:scaleY(.5); opacity:.5;} 50%{ transform:scaleY(1); opacity:1;} }
-  .brand-text{ letter-spacing:.14em; font-weight:800; font-size:15px; }
-  .brand-sub{ color:var(--muted); font-size:11px; letter-spacing:.12em; margin-top:2px; }
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
 
-  /* ---------- panels shared ---------- */
-  .panel{
-    background: linear-gradient(180deg, var(--panel), var(--panel-2));
-    border:1px solid var(--line);
-    border-radius: 14px;
-    padding: 28px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.45);
-    position:relative;
-    overflow:hidden;
-  }
-  .panel::before{
-    content:"";
-    position:absolute; inset:0 0 auto 0; height:2px;
-    background: linear-gradient(90deg, transparent, var(--amber), transparent);
-  }
-  .eyebrow{ font-size:11px; letter-spacing:.18em; color:var(--muted); text-transform:uppercase; margin-bottom: 6px; }
-  h1{ font-size:20px; margin:0 0 20px 0; font-weight:700; }
-  label{ display:block; font-size:11px; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; margin-bottom:6px; margin-top:16px;}
-  input{
-    width:100%; background:#0c1424; border:1px solid var(--line); color:var(--text);
-    padding:12px 14px; border-radius:8px; font-size:14px; font-family:'JetBrains Mono', monospace;
-    outline:none; transition: border-color .15s, box-shadow .15s;
-  }
-  input:focus{ border-color: var(--amber); box-shadow: 0 0 0 3px rgba(242,169,59,.15); }
-  button{
-    width:100%; margin-top:22px; padding:13px; border-radius:8px; border:none;
-    background: var(--amber); color:#181008; font-weight:700; font-size:14px;
-    cursor:pointer; letter-spacing:.03em; transition: filter .15s, transform .1s;
-    font-family:'JetBrains Mono', monospace;
-  }
-  button:hover{ filter:brightness(1.08); }
-  button:active{ transform: translateY(1px); }
-  button:disabled{ opacity:.6; cursor:not-allowed; }
-  .btn-ghost{ background:none; border:1px solid var(--line); color:var(--muted); }
-  .btn-ghost:hover{ color:var(--text); border-color:var(--amber); filter:none; }
-  .btn-danger{ background: rgba(229,72,77,.14); color:#ff9a9d; border:1px solid rgba(229,72,77,.4); }
-  .hint{ color:var(--muted); font-size:12px; margin-top:14px; line-height:1.5; }
-  .error{
-    margin-top:14px; padding:10px 12px; border-radius:8px; font-size:12.5px;
-    background: rgba(229,72,77,.12); border:1px solid rgba(229,72,77,.35); color:#ff9a9d;
-    display:none;
-  }
-  .error.show{ display:block; }
-  .success{
-    margin-top:14px; padding:10px 12px; border-radius:8px; font-size:12.5px;
-    background: rgba(89,217,179,.1); border:1px solid rgba(89,217,179,.35); color:var(--mint);
-    display:none;
-  }
-  .success.show{ display:block; }
-  .badge{
-    display:inline-block; font-size:10px; letter-spacing:.08em; padding:3px 8px;
-    border-radius:20px; background:rgba(242,169,59,.15); color:var(--amber); border:1px solid rgba(242,169,59,.4);
-    margin-left:8px; vertical-align:middle;
-  }
+        body {
+            background: radial-gradient(circle at 20% 0%, #0d1526 0%, #080c16 60%), var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
 
-  /* ---------- header bar (admin & contacts & chat) ---------- */
-  .wrap{ display:none; width:100%; max-width:560px; flex-direction:column; }
-  .bar{
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-    background: var(--panel); border:1px solid var(--line);
-    border-radius:14px 14px 0 0; padding:14px 18px;
-  }
-  .bar-left{ display:flex; align-items:center; gap:10px; min-width:0; }
-  .icon-btn{
-    width:34px; height:34px; border-radius:8px; border:1px solid var(--line); background:#0c1424;
-    color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
-    font-size:16px; margin:0; padding:0;
-  }
-  .icon-btn:hover{ color:var(--text); border-color:var(--amber); filter:none; }
-  .title-block{ min-width:0; }
-  .title-block .name{ font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .title-block .sub{ font-size:11px; color:var(--muted); letter-spacing:.06em; display:flex; align-items:center; gap:6px; }
-  .dot{ width:7px; height:7px; border-radius:50%; background:var(--mint); box-shadow:0 0 8px var(--mint); animation: blink 2s infinite; }
-  @keyframes blink{ 50%{ opacity:.4; } }
-  .bar .icon-btn.logout{ width:auto; padding:0 12px; font-size:11px; font-family:'JetBrains Mono',monospace; letter-spacing:.06em; }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
 
-  /* ---------- admin screen ---------- */
-  .body-panel{
-    background:#0b1220; border:1px solid var(--line); border-top:none;
-    padding:18px; max-height:60vh; overflow-y:auto;
-  }
-  .add-form{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
-  .add-form input{ flex:1; min-width:120px; }
-  .add-form button{ width:auto; margin:0; padding:0 16px; align-self:stretch; }
-  .user-row{
-    display:flex; align-items:center; justify-content:space-between; padding:10px 12px;
-    border:1px solid var(--line); border-radius:8px; margin-bottom:8px; background:var(--panel-2);
-  }
-  .user-row .uid{ font-family:'JetBrains Mono',monospace; font-size:13px; }
-  .user-row button{ width:auto; margin:0; padding:6px 10px; font-size:11px; }
-  .footer-bar{ border:1px solid var(--line); border-top:none; border-radius:0 0 14px 14px; padding:14px 18px; background:var(--panel); }
+        .app {
+            width: 100%;
+            max-width: 460px;
+        }
 
-  /* ---------- contact list ---------- */
-  .contact-row{
-    display:flex; align-items:center; gap:12px; padding:12px; border:1px solid var(--line);
-    border-radius:10px; margin-bottom:8px; background:var(--panel-2); cursor:pointer; transition:border-color .15s;
-  }
-  .contact-row:hover{ border-color: var(--amber); }
-  .avatar{
-    width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, var(--amber), #c97a1f);
-    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; color:#181008; flex-shrink:0;
-  }
-  .contact-name{ font-weight:600; font-size:14px; }
-  .contact-hint{ font-size:11px; color:var(--muted); }
-  .empty{ text-align:center; color:var(--muted); font-size:13px; padding:30px 10px; }
-  .empty span{ display:block; font-size:11px; margin-top:6px; letter-spacing:.1em; font-family:'JetBrains Mono',monospace; }
+        .hidden {
+            display: none !important;
+        }
 
-  /* ---------- chat feed ---------- */
-  .feed{
-    height:52vh; overflow-y:auto; background:#0b1220; border:1px solid var(--line); border-top:none; border-bottom:none;
-    padding: 16px 18px; display:flex; flex-direction:column; gap:12px;
-  }
-  .feed::-webkit-scrollbar{ width:8px; }
-  .feed::-webkit-scrollbar-thumb{ background: var(--line); border-radius:8px; }
-  .msg{ max-width:78%; }
-  .msg .meta{ font-size:10.5px; color:var(--muted); letter-spacing:.06em; margin-bottom:3px; display:flex; gap:8px; }
-  .msg .bubble{ background: var(--panel-2); border:1px solid var(--line); padding:9px 12px; border-radius:10px; font-size:14px; line-height:1.45; word-wrap:break-word; }
-  .msg.me{ align-self:flex-end; }
-  .msg.me .bubble{ background: rgba(89,217,179,.12); border-color: rgba(89,217,179,.35); }
-  .msg.me .meta{ justify-content:flex-end; }
-  .composer{
-    display:flex; gap:8px; background: var(--panel); border:1px solid var(--line); border-radius:0 0 14px 14px; padding:12px;
-  }
-  .composer input{ flex:1; }
-  .composer button{ width:auto; margin:0; padding:0 18px; }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
 
-  @media (max-width: 480px){
-    .panel{ padding:22px; }
-    .feed{ height:56vh; }
-  }
-</style>
+        .bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 22px;
+        }
+
+        .bars span {
+            width: 4px;
+            background: var(--amber);
+            border-radius: 2px;
+            animation: pulse 1.4s ease-in-out infinite;
+            opacity: .85;
+        }
+
+        .bars span:nth-child(1) {
+            height: 6px;
+            animation-delay: 0s;
+        }
+
+        .bars span:nth-child(2) {
+            height: 12px;
+            animation-delay: .15s;
+        }
+
+        .bars span:nth-child(3) {
+            height: 18px;
+            animation-delay: .3s;
+        }
+
+        .bars span:nth-child(4) {
+            height: 12px;
+            animation-delay: .45s;
+        }
+
+        .bars span:nth-child(5) {
+            height: 22px;
+            animation-delay: .6s;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scaleY(.5);
+                opacity: .5;
+            }
+
+            50% {
+                transform: scaleY(1);
+                opacity: 1;
+            }
+        }
+
+        .brand-text {
+            letter-spacing: .14em;
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .brand-sub {
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: .12em;
+            margin-top: 2px;
+        }
+
+        .panel {
+            background: linear-gradient(180deg, var(--panel), var(--panel-2));
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--amber), transparent);
+        }
+
+        .eyebrow {
+            font-size: 11px;
+            letter-spacing: .18em;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            letter-spacing: .1em;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            margin-top: 16px;
+        }
+
+        input {
+            width: 100%;
+            background: #0c1424;
+            border: 1px solid var(--line);
+            color: var(--text);
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        input:focus {
+            border-color: var(--amber);
+            box-shadow: 0 0 0 3px rgba(242, 169, 59, .15);
+        }
+
+        button {
+            width: 100%;
+            margin-top: 22px;
+            padding: 13px;
+            border-radius: 8px;
+            border: none;
+            background: var(--amber);
+            color: #181008;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            letter-spacing: .03em;
+            transition: filter .15s, transform .1s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        button:hover {
+            filter: brightness(1.08);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        .btn-ghost {
+            background: none;
+            border: 1px solid var(--line);
+            color: var(--muted);
+        }
+
+        .btn-ghost:hover {
+            color: var(--text);
+            border-color: var(--amber);
+            filter: none;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 14px;
+            line-height: 1.5;
+        }
+
+        .error {
+            margin-top: 14px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            background: rgba(229, 72, 77, .12);
+            border: 1px solid rgba(229, 72, 77, .35);
+            color: #ff9a9d;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .success {
+            margin-top: 14px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            background: rgba(89, 217, 179, .1);
+            border: 1px solid rgba(89, 217, 179, .35);
+            color: var(--mint);
+            display: none;
+        }
+
+        .success.show {
+            display: block;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 10px;
+            letter-spacing: .08em;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: rgba(242, 169, 59, .15);
+            color: var(--amber);
+            border: 1px solid rgba(242, 169, 59, .4);
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .wrap {
+            display: none;
+            width: 100%;
+            max-width: 560px;
+            flex-direction: column;
+        }
+
+        .bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 14px 14px 0 0;
+            padding: 14px 18px;
+        }
+
+        .bar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            background: #0c1424;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: 16px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .icon-btn:hover {
+            color: var(--text);
+            border-color: var(--amber);
+            filter: none;
+        }
+
+        .title-block {
+            min-width: 0;
+        }
+
+        .title-block .name {
+            font-weight: 700;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .title-block .sub {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: .06em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--mint);
+            box-shadow: 0 0 8px var(--mint);
+            animation: blink 2s infinite;
+        }
+
+        .dot.off {
+            background: var(--danger);
+            box-shadow: 0 0 8px var(--danger);
+            animation: none;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: .4;
+            }
+        }
+
+        .bar .icon-btn.logout {
+            width: auto;
+            padding: 0 12px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: .06em;
+        }
+
+        .body-panel {
+            background: #0b1220;
+            border: 1px solid var(--line);
+            border-top: none;
+            padding: 18px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .add-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .add-form input {
+            flex: 1;
+            min-width: 110px;
+        }
+
+        .add-form button {
+            width: auto;
+            margin: 0;
+            padding: 0 14px;
+            align-self: stretch;
+        }
+
+        .user-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: var(--panel-2);
+        }
+
+        .user-row .uid {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .user-row .tag {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: .06em;
+        }
+
+        .footer-bar {
+            border: 1px solid var(--line);
+            border-top: none;
+            border-radius: 0 0 14px 14px;
+            padding: 14px 18px;
+            background: var(--panel);
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: .06em;
+        }
+
+        .config-box {
+            margin-top: 14px;
+        }
+
+        .config-box textarea {
+            width: 100%;
+            height: 120px;
+            background: #0c1424;
+            border: 1px solid var(--line);
+            color: var(--mint);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            resize: vertical;
+        }
+
+        .contact-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            background: var(--panel-2);
+            cursor: pointer;
+            transition: border-color .15s;
+        }
+
+        .contact-row:hover {
+            border-color: var(--amber);
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--amber), #c97a1f);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            color: #181008;
+            flex-shrink: 0;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .contact-hint {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+            padding: 30px 10px;
+        }
+
+        .empty span {
+            display: block;
+            font-size: 11px;
+            margin-top: 6px;
+            letter-spacing: .1em;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .feed {
+            height: 52vh;
+            overflow-y: auto;
+            background: #0b1220;
+            border: 1px solid var(--line);
+            border-top: none;
+            border-bottom: none;
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feed::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .feed::-webkit-scrollbar-thumb {
+            background: var(--line);
+            border-radius: 8px;
+        }
+
+        .msg {
+            max-width: 78%;
+        }
+
+        .msg .meta {
+            font-size: 10.5px;
+            color: var(--muted);
+            letter-spacing: .06em;
+            margin-bottom: 3px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .msg .bubble {
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.45;
+            word-wrap: break-word;
+        }
+
+        .msg.me {
+            align-self: flex-end;
+        }
+
+        .msg.me .bubble {
+            background: rgba(89, 217, 179, .12);
+            border-color: rgba(89, 217, 179, .35);
+        }
+
+        .msg.me .meta {
+            justify-content: flex-end;
+        }
+
+        .composer {
+            display: flex;
+            gap: 8px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 0 0 14px 14px;
+            padding: 12px;
+        }
+
+        .composer input {
+            flex: 1;
+        }
+
+        .composer button {
+            width: auto;
+            margin: 0;
+            padding: 0 18px;
+        }
+
+        @media (max-width:480px) {
+            .panel {
+                padding: 22px;
+            }
+
+            .feed {
+                height: 56vh;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<div class="fatal hidden" id="fatalBanner">
-  <div class="fatal-box">
-    <h2 class="mono">PENYIMPANAN TIDAK TERSEDIA</h2>
-    <p>Aplikasi ini butuh fitur penyimpanan bawaan Claude untuk mengirim &amp; menyimpan pesan antar akun.</p>
-    <p>Kemungkinan file ini dibuka di luar Claude (misalnya sudah diunduh lalu dibuka langsung dua kali dari komputer/HP). Buka kembali melalui jendela pratinjau di Claude, jangan lewat file yang sudah diunduh, agar pesan bisa terkirim dan tersinkron ke akun lain.</p>
-  </div>
-</div>
-
-<!-- LOGIN -->
-<div class="app" id="loginScreen">
-  <div class="brand">
-    <div class="bars"><span></span><span></span><span></span><span></span><span></span></div>
-    <div>
-      <div class="brand-text mono">SINYAL</div>
-      <div class="brand-sub mono">OBROLAN PRIBADI</div>
+    <!-- LOGIN -->
+    <div class="app" id="loginScreen">
+        <div class="brand">
+            <div class="bars"><span></span><span></span><span></span><span></span><span></span></div>
+            <div>
+                <div class="brand-text mono">SINYAL</div>
+                <div class="brand-sub mono">OBROLAN PRIBADI — INSTAN</div>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="eyebrow mono">AKSES MASUK</div>
+            <h1>Masuk ke Akun</h1>
+            <label class="mono" for="idInput">ID</label>
+            <input id="idInput" class="mono" type="text" placeholder="ID akun" autocomplete="off">
+            <label class="mono" for="passInput">Password</label>
+            <input id="passInput" class="mono" type="password" placeholder="••••••••" autocomplete="off">
+            <div class="error mono" id="errorBox"></div>
+            <button id="loginBtn" class="mono">MASUK</button>
+            <div class="hint">Akun sudah ditentukan lewat kode aplikasi (lihat bagian ACCOUNTS di source). Admin masuk
+                dengan ID <b id="adminIdHint"></b>. Tidak perlu setup server apa pun — bisa langsung dipakai.</div>
+        </div>
     </div>
-  </div>
-  <div class="panel">
-    <div class="eyebrow mono">AKSES MASUK</div>
-    <h1>Masuk ke Akun</h1>
-    <label class="mono" for="idInput">ID</label>
-    <input id="idInput" class="mono" type="text" placeholder="ID akun" autocomplete="off">
-    <label class="mono" for="passInput">Password</label>
-    <input id="passInput" class="mono" type="password" placeholder="••••••••" autocomplete="off">
-    <div class="error mono" id="errorBox"></div>
-    <button id="loginBtn" class="mono">MASUK</button>
-    <div class="hint">Akun hanya bisa dibuat oleh admin. Kalau belum punya akun, minta admin membuatkannya. Admin masuk dengan ID <b>admin</b> (password default: <b>admin123</b> — segera ganti setelah masuk pertama kali dari kode sumbernya bila perlu diamankan lebih lanjut).</div>
-  </div>
-</div>
 
-<!-- ADMIN PANEL -->
-<div class="wrap" id="adminScreen">
-  <div class="bar">
-    <div class="bar-left">
-      <div class="title-block">
-        <div class="name mono">PANEL ADMIN <span class="badge mono">ADMIN</span></div>
-        <div class="sub mono"><span class="dot"></span>Kelola akun pengguna</div>
-      </div>
+    <!-- ADMIN PANEL -->
+    <div class="wrap" id="adminScreen">
+        <div class="bar">
+            <div class="bar-left">
+                <div class="title-block">
+                    <div class="name mono">PANEL ADMIN <span class="badge mono">ADMIN</span></div>
+                    <div class="sub mono"><span class="dot"></span>Kelola akun (sesi ini)</div>
+                </div>
+            </div>
+            <button class="icon-btn logout mono" id="adminLogoutBtn">KELUAR</button>
+        </div>
+        <div class="body-panel">
+            <div class="add-form">
+                <input id="newIdInput" class="mono" type="text" placeholder="ID baru">
+                <input id="newPassInput" class="mono" type="text" placeholder="Password baru">
+                <button id="addUserBtn" class="mono">TAMBAH (SESI INI)</button>
+            </div>
+            <div class="error mono" id="adminErrorBox"></div>
+            <div class="success mono" id="adminSuccessBox"></div>
+            <div id="userList"></div>
+            <div class="config-box">
+                <label class="mono">KODE UNTUK DISALIN KE FILE (AGAR PERMANEN)</label>
+                <textarea id="configOutput" class="mono" readonly></textarea>
+                <button class="btn-ghost mono" id="copyConfigBtn" style="margin-top:8px;">SALIN KODE</button>
+            </div>
+        </div>
+        <div class="footer-bar mono">
+            AKUN BARU DI ATAS HANYA AKTIF SELAMA SESI INI. TEMPEL KODE DI ATAS KE BAGIAN "ACCOUNTS" DI FILE HTML AGAR
+            PERMANEN, LALU BAGIKAN ULANG FILE-NYA.
+        </div>
     </div>
-    <button class="icon-btn logout mono" id="adminLogoutBtn">KELUAR</button>
-  </div>
-  <div class="body-panel">
-    <div class="add-form">
-      <input id="newIdInput" class="mono" type="text" placeholder="ID baru">
-      <input id="newPassInput" class="mono" type="text" placeholder="Password baru">
-      <button id="addUserBtn" class="mono">BUAT AKUN</button>
+
+    <!-- CONTACT LIST -->
+    <div class="wrap" id="contactScreen">
+        <div class="bar">
+            <div class="bar-left">
+                <div class="title-block">
+                    <div class="name mono" id="contactWhoAmI"></div>
+                    <div class="sub mono"><span class="dot"></span>Pilih kontak</div>
+                </div>
+            </div>
+            <button class="icon-btn logout mono" id="contactLogoutBtn">KELUAR</button>
+        </div>
+        <div class="body-panel" id="contactList"></div>
+        <div class="footer-bar mono">OBROLAN BERSIFAT PRIBADI — HANYA ANTARA ANDA &amp; KONTAK TERPILIH</div>
     </div>
-    <div class="error mono" id="adminErrorBox"></div>
-    <div class="success mono" id="adminSuccessBox"></div>
-    <div id="userList"></div>
-  </div>
-  <div class="footer-bar mono" style="color:var(--muted); font-size:11px; letter-spacing:.06em;">
-    DAFTAR AKUN AKAN LANGSUNG BISA DIPAKAI LOGIN OLEH PEMILIKNYA
-  </div>
-</div>
 
-<!-- CONTACT LIST -->
-<div class="wrap" id="contactScreen">
-  <div class="bar">
-    <div class="bar-left">
-      <div class="title-block">
-        <div class="name mono" id="contactWhoAmI"></div>
-        <div class="sub mono"><span class="dot"></span>Pilih kontak</div>
-      </div>
+    <!-- PRIVATE CHAT -->
+    <div class="wrap" id="chatScreen">
+        <div class="bar">
+            <div class="bar-left">
+                <button class="icon-btn" id="backBtn">&#8592;</button>
+                <div class="title-block">
+                    <div class="name mono" id="chatWithName"></div>
+                    <div class="sub mono">
+                        <span class="dot" id="connDot"></span><span id="connLabel">Menghubungkan…</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="feed" id="feed"></div>
+        <div class="composer">
+            <input id="msgInput" class="mono" type="text" placeholder="Ketik pesan…" autocomplete="off">
+            <button id="sendBtn" class="mono">KIRIM</button>
+        </div>
     </div>
-    <button class="icon-btn logout mono" id="contactLogoutBtn">KELUAR</button>
-  </div>
-  <div class="body-panel" id="contactList"></div>
-  <div class="footer-bar mono" style="color:var(--muted); font-size:11px; letter-spacing:.06em;">
-    OBROLAN BERSIFAT PRIBADI — HANYA ANTARA ANDA &amp; KONTAK TERPILIH
-  </div>
-</div>
 
-<!-- PRIVATE CHAT -->
-<div class="wrap" id="chatScreen">
-  <div class="bar">
-    <div class="bar-left">
-      <button class="icon-btn" id="backBtn">&#8592;</button>
-      <div class="title-block">
-        <div class="name mono" id="chatWithName"></div>
-        <div class="sub mono"><span class="dot"></span>Obrolan pribadi</div>
-      </div>
-    </div>
-  </div>
-  <div class="feed" id="feed"></div>
-  <div class="composer">
-    <input id="msgInput" class="mono" type="text" placeholder="Ketik pesan…" autocomplete="off">
-    <button id="sendBtn" class="mono">KIRIM</button>
-  </div>
-</div>
+    <script>
+        (function(){
+  // =====================================================================
+  // KONFIGURASI AKUN — HANYA ADMIN (Anda) YANG MENGEDIT BAGIAN INI.
+  // Format: 'id': 'password'
+  // Tambahkan baris baru untuk membuat akun baru, lalu simpan file ini
+  // dan bagikan ulang ke pengguna. Pengguna biasa TIDAK bisa mendaftar
+  // sendiri lewat aplikasi.
+  // =====================================================================
+  const ADMIN_ID = 'admin';
+  const ADMIN_PASSWORD = 'admin123'; // ganti ini agar lebih aman
+  const ACCOUNTS = {
+    'budi': 'sandi123',
+    'sari': 'sandi456'
+  };
+  // Salt rahasia dipakai supaya nama "kanal" pesan sulit ditebak orang lain.
+  // Ganti bebas jika ingin membuat kanal baru (akun lama tetap bisa login,
+  // hanya riwayat percakapan lama jadi tidak terhubung ke kanal baru).
+  const SECRET_SALT = 'ubah-rahasia-ini-8823';
+  // =====================================================================
 
-<script>
-(function(){
-  const ADMIN_KEY = 'sinyal-admin';
-  const USERS_KEY = 'sinyal-users';
-  const MAX_MESSAGES = 300;
-  const DEFAULT_ADMIN = { id: 'admin', password: 'admin123' };
-
+  const NTFY_BASE = 'https://ntfy.sh';
   let currentUser = null;
   let isAdmin = false;
   let activeContact = null;
-  let pollTimer = null;
-  let lastRenderedCount = -1;
+  let sessionAccounts = Object.assign({}, ACCOUNTS); // akun tambahan admin (sesi ini saja)
+  let eventSource = null;
+  let renderedIds = new Set();
+  let messageBuffer = [];
 
-  // ---- DOM refs ----
-  const fatalBanner = document.getElementById('fatalBanner');
   const loginScreen = document.getElementById('loginScreen');
   const adminScreen = document.getElementById('adminScreen');
   const contactScreen = document.getElementById('contactScreen');
@@ -311,6 +731,7 @@
   const passInput = document.getElementById('passInput');
   const errorBox = document.getElementById('errorBox');
   const loginBtn = document.getElementById('loginBtn');
+  const adminIdHint = document.getElementById('adminIdHint');
 
   const newIdInput = document.getElementById('newIdInput');
   const newPassInput = document.getElementById('newPassInput');
@@ -319,6 +740,8 @@
   const adminSuccessBox = document.getElementById('adminSuccessBox');
   const userList = document.getElementById('userList');
   const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+  const configOutput = document.getElementById('configOutput');
+  const copyConfigBtn = document.getElementById('copyConfigBtn');
 
   const contactWhoAmI = document.getElementById('contactWhoAmI');
   const contactList = document.getElementById('contactList');
@@ -329,196 +752,113 @@
   const feed = document.getElementById('feed');
   const msgInput = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
+  const connDot = document.getElementById('connDot');
+  const connLabel = document.getElementById('connLabel');
+
+  adminIdHint.textContent = ADMIN_ID;
 
   function showScreen(el){
-    [loginScreen, adminScreen, contactScreen, chatScreen].forEach(s => {
-      s.style.display = 'none';
-    });
+    [loginScreen, adminScreen, contactScreen, chatScreen].forEach(s => s.style.display = 'none');
     el.style.display = (el === loginScreen) ? 'block' : 'flex';
   }
+  function showError(box, text){ box.textContent = text; box.classList.remove('success'); box.classList.add('error','show'); }
+  function showSuccess(box, text){ box.textContent = text; box.classList.remove('error'); box.classList.add('success','show'); }
+  function clearBox(box){ box.textContent = ''; box.classList.remove('show'); }
+  function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+  function fmtTime(ts){ return new Date(ts).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }); }
+  function initials(id){ return (id || '?').trim().slice(0,2).toUpperCase(); }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 
-  function checkStorageAvailable(){
-    if (typeof window.storage === 'undefined' || !window.storage || typeof window.storage.get !== 'function'){
-      fatalBanner.classList.remove('hidden');
-      loginBtn.disabled = true;
-      return false;
-    }
-    return true;
+  function hashStr(s){
+    let h = 5381;
+    for(let i=0;i<s.length;i++){ h = ((h*33) ^ s.charCodeAt(i)) >>> 0; }
+    return h.toString(16);
   }
-
-  // ---- storage helpers ----
-  async function getJSON(key, fallback){
-    try{
-      const res = await window.storage.get(key, true);
-      return res && res.value ? JSON.parse(res.value) : fallback;
-    }catch(e){ return fallback; }
-  }
-  async function setJSON(key, value){
-    try{
-      const res = await window.storage.set(key, JSON.stringify(value), true);
-      return !!res;
-    }catch(e){ console.error('gagal menyimpan', key, e); return false; }
-  }
-
-  async function ensureAdmin(){
-    const admin = await getJSON(ADMIN_KEY, null);
-    if (!admin){
-      await setJSON(ADMIN_KEY, DEFAULT_ADMIN);
-      return DEFAULT_ADMIN;
-    }
-    return admin;
-  }
-  async function getUsers(){ return await getJSON(USERS_KEY, {}); }
-  async function saveUsers(users){ return await setJSON(USERS_KEY, users); }
-
-  function pairKey(a, b){
-    return 'sinyal-dm:' + [a, b].sort().join('::');
-  }
-  async function getMessages(a, b){ return await getJSON(pairKey(a, b), []); }
-  async function saveMessages(a, b, list){
-    const trimmed = list.slice(-MAX_MESSAGES);
-    return await setJSON(pairKey(a, b), trimmed);
-  }
-  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-
-  // Kirim dengan verifikasi + retry supaya pesan tidak hilang bila
-  // kedua akun menulis di waktu yang berdekatan.
-  async function appendMessageSafely(a, b, newMsg){
-    let attempts = 0;
-    while (attempts < 5){
-      const list = await getMessages(a, b);
-      if (!list.some(m => m.id === newMsg.id)) list.push(newMsg);
-      const ok = await saveMessages(a, b, list);
-      if (ok){
-        const check = await getMessages(a, b);
-        if (check.some(m => m.id === newMsg.id)) return true;
-      }
-      attempts++;
-    }
-    return false;
-  }
-
-  function escapeHtml(str){
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-  function fmtTime(ts){
-    return new Date(ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-  }
-  function initials(id){
-    return (id || '?').trim().slice(0, 2).toUpperCase();
-  }
-
-  function showError(box, text){
-    box.textContent = text;
-    box.classList.add('show');
-  }
-  function clearBox(box){
-    box.textContent = '';
-    box.classList.remove('show');
+  function topicFor(a, b){
+    const pair = [a,b].sort().join('|');
+    return 'sinyal8823-' + hashStr(pair + '::' + SECRET_SALT);
   }
 
   // ---------------- LOGIN ----------------
-  async function handleLogin(){
+  function handleLogin(){
     clearBox(errorBox);
     const id = idInput.value.trim();
     const pass = passInput.value;
     if (!id || !pass){ showError(errorBox, 'ID dan password wajib diisi.'); return; }
 
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'MEMERIKSA…';
-    try{
-      const admin = await ensureAdmin();
-      if (id === admin.id){
-        if (pass !== admin.password){
-          showError(errorBox, 'Password admin salah.');
-        } else {
-          currentUser = id; isAdmin = true;
-          idInput.value = ''; passInput.value = '';
-          openAdminScreen();
-        }
-      } else {
-        const users = await getUsers();
-        if (!(id in users)){
-          showError(errorBox, 'ID tidak ditemukan. Minta admin membuatkan akun untuk Anda.');
-        } else if (users[id] !== pass){
-          showError(errorBox, 'Password salah.');
-        } else {
-          currentUser = id; isAdmin = false;
-          idInput.value = ''; passInput.value = '';
-          openContactScreen();
-        }
-      }
-    } catch(e){
-      showError(errorBox, 'Terjadi kesalahan saat memeriksa akun. Coba lagi.');
+    if (id === ADMIN_ID){
+      if (pass !== ADMIN_PASSWORD){ showError(errorBox, 'Password admin salah.'); return; }
+      currentUser = id; isAdmin = true;
+      idInput.value=''; passInput.value='';
+      openAdminScreen();
+      return;
     }
-    loginBtn.disabled = false;
-    loginBtn.textContent = 'MASUK';
+    if (!(id in sessionAccounts)){
+      showError(errorBox, 'ID tidak ditemukan. Minta admin menambahkan akun untuk Anda.');
+      return;
+    }
+    if (sessionAccounts[id] !== pass){
+      showError(errorBox, 'Password salah.');
+      return;
+    }
+    currentUser = id; isAdmin = false;
+    idInput.value=''; passInput.value='';
+    openContactScreen();
   }
 
   // ---------------- ADMIN ----------------
-  async function openAdminScreen(){
+  function openAdminScreen(){
     showScreen(adminScreen);
-    await renderUserList();
+    renderUserList();
+    renderConfigOutput();
   }
-  async function renderUserList(){
-    const users = await getUsers();
-    const ids = Object.keys(users);
+  function renderUserList(){
+    const ids = Object.keys(sessionAccounts);
     if (ids.length === 0){
-      userList.innerHTML = '<div class="empty mono">Belum ada akun.<span>BUAT AKUN PERTAMA DI ATAS</span></div>';
+      userList.innerHTML = '<div class="empty mono">Belum ada akun.<span>TAMBAHKAN DI ATAS</span></div>';
       return;
     }
     userList.innerHTML = ids.map(id => `
       <div class="user-row">
         <span class="uid">${escapeHtml(id)}</span>
-        <button class="btn-danger mono" data-remove="${escapeHtml(id)}">HAPUS</button>
+        <span class="tag mono">${ACCOUNTS[id] !== undefined ? 'PERMANEN' : 'SESI INI SAJA'}</span>
       </div>
     `).join('');
-    userList.querySelectorAll('[data-remove]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-remove');
-        clearBox(adminErrorBox); clearBox(adminSuccessBox);
-        const users = await getUsers();
-        delete users[id];
-        await saveUsers(users);
-        showError(adminSuccessBox, `Akun "${id}" dihapus.`);
-        adminSuccessBox.classList.remove('error'); adminSuccessBox.classList.add('success','show');
-        await renderUserList();
-      });
-    });
   }
-  async function handleAddUser(){
+  function renderConfigOutput(){
+    const lines = Object.keys(sessionAccounts).map(id => `    '${id.replace(/'/g,"")}': '${sessionAccounts[id].replace(/'/g,"")}'`);
+    configOutput.value = 'const ACCOUNTS = {\n' + lines.join(',\n') + '\n  };';
+  }
+  function handleAddUser(){
     clearBox(adminErrorBox); clearBox(adminSuccessBox);
     const id = newIdInput.value.trim();
     const pass = newPassInput.value.trim();
     if (!id || !pass){ showError(adminErrorBox, 'ID dan password baru wajib diisi.'); return; }
-    const admin = await ensureAdmin();
-    if (id === admin.id){ showError(adminErrorBox, 'ID itu dipakai admin, pilih ID lain.'); return; }
-    const users = await getUsers();
-    if (id in users){ showError(adminErrorBox, 'ID sudah dipakai akun lain.'); return; }
-    addUserBtn.disabled = true;
-    users[id] = pass;
-    const ok = await saveUsers(users);
-    addUserBtn.disabled = false;
-    if (!ok){ showError(adminErrorBox, 'Gagal menyimpan akun, coba lagi.'); return; }
-    newIdInput.value = ''; newPassInput.value = '';
-    showError(adminSuccessBox, `Akun "${id}" berhasil dibuat.`);
-    adminSuccessBox.classList.add('success','show');
-    await renderUserList();
+    if (id === ADMIN_ID){ showError(adminErrorBox, 'ID itu dipakai admin, pilih ID lain.'); return; }
+    if (id in sessionAccounts){ showError(adminErrorBox, 'ID sudah dipakai akun lain.'); return; }
+    sessionAccounts[id] = pass;
+    newIdInput.value=''; newPassInput.value='';
+    showSuccess(adminSuccessBox, `Akun "${id}" ditambahkan untuk sesi ini. Salin kode di bawah agar permanen.`);
+    renderUserList();
+    renderConfigOutput();
   }
+  copyConfigBtn.addEventListener('click', () => {
+    configOutput.select();
+    document.execCommand('copy');
+    copyConfigBtn.textContent = 'TERSALIN!';
+    setTimeout(() => { copyConfigBtn.textContent = 'SALIN KODE'; }, 1500);
+  });
 
   // ---------------- CONTACTS ----------------
-  async function openContactScreen(){
+  function openContactScreen(){
     showScreen(contactScreen);
     contactWhoAmI.textContent = currentUser.toUpperCase();
-    await renderContactList();
+    renderContactList();
   }
-  async function renderContactList(){
-    const users = await getUsers();
-    const others = Object.keys(users).filter(id => id !== currentUser);
+  function renderContactList(){
+    const others = Object.keys(sessionAccounts).filter(id => id !== currentUser);
     if (others.length === 0){
-      contactList.innerHTML = '<div class="empty mono">Belum ada kontak lain.<span>MINTA ADMIN MEMBUAT AKUN TEMAN ANDA</span></div>';
+      contactList.innerHTML = '<div class="empty mono">Belum ada kontak lain.<span>MINTA ADMIN MENAMBAHKAN AKUN TEMAN ANDA</span></div>';
       return;
     }
     contactList.innerHTML = others.map(id => `
@@ -535,61 +875,114 @@
     });
   }
 
-  // ---------------- PRIVATE CHAT ----------------
+  // ---------------- PRIVATE CHAT (via ntfy.sh, real-time, tanpa setup) ----------------
   function openChatWith(contactId){
     activeContact = contactId;
     chatWithName.textContent = contactId.toUpperCase();
-    lastRenderedCount = -1;
+    messageBuffer = [];
+    renderedIds = new Set();
+    feed.innerHTML = '<div class="empty mono">Memuat riwayat…</div>';
+    setConn(false, 'Menghubungkan…');
     showScreen(chatScreen);
-    startPolling();
+    loadHistoryThenSubscribe();
   }
-  function renderMessages(list){
-    if (list.length === lastRenderedCount) return;
-    lastRenderedCount = list.length;
-    if (list.length === 0){
+
+  function setConn(ok, label){
+    connLabel.textContent = label;
+    connDot.classList.toggle('off', !ok);
+  }
+
+  function parseNtfyLine(line){
+    try{
+      const envelope = JSON.parse(line);
+      if (envelope.event !== 'message' || !envelope.message) return null;
+      return JSON.parse(envelope.message);
+    }catch(e){ return null; }
+  }
+
+  function addMessage(m){
+    if (!m || !m.id || renderedIds.has(m.id)) return;
+    renderedIds.add(m.id);
+    messageBuffer.push(m);
+    messageBuffer.sort((a,b) => a.ts - b.ts);
+    renderMessages();
+  }
+
+  function renderMessages(){
+    if (messageBuffer.length === 0){
       feed.innerHTML = '<div class="empty mono">Belum ada pesan.<span>MULAI OBROLAN INI</span></div>';
       return;
     }
     const wasAtBottom = feed.scrollTop + feed.clientHeight >= feed.scrollHeight - 40;
-    feed.innerHTML = list.map(m => {
+    feed.innerHTML = messageBuffer.map(m => {
       const mine = m.sender === currentUser;
-      return `<div class="msg ${mine ? 'me' : ''}" data-id="${escapeHtml(m.id || '')}">
+      return `<div class="msg ${mine ? 'me' : ''}">
         <div class="meta"><span>${escapeHtml(mine ? 'Anda' : m.sender)}</span><span>${fmtTime(m.ts)}</span></div>
         <div class="bubble">${escapeHtml(m.text)}</div>
       </div>`;
     }).join('');
     if (wasAtBottom) feed.scrollTop = feed.scrollHeight;
   }
-  async function pollMessages(){
-    if (!activeContact) return;
-    const list = await getMessages(currentUser, activeContact);
-    renderMessages(list);
+
+  async function loadHistoryThenSubscribe(){
+    const topic = topicFor(currentUser, activeContact);
+    try{
+      const res = await fetch(`${NTFY_BASE}/${topic}/json?poll=1`);
+      if (res.ok){
+        const text = await res.text();
+        text.split('\n').filter(Boolean).forEach(line => {
+          const m = parseNtfyLine(line);
+          if (m) addMessage(m);
+        });
+      }
+    }catch(e){
+      // Riwayat gagal dimuat (mungkin di luar 12 jam cache atau koneksi bermasalah);
+      // tetap lanjut ke langganan real-time.
+    }
+    subscribeLive(topic);
   }
-  function startPolling(){
-    stopPolling();
-    pollMessages();
-    pollTimer = setInterval(pollMessages, 2000);
+
+  function subscribeLive(topic){
+    if (eventSource) eventSource.close();
+    try{
+      eventSource = new EventSource(`${NTFY_BASE}/${topic}/sse`);
+      eventSource.onopen = () => setConn(true, 'Terhubung');
+      eventSource.onmessage = (evt) => {
+        const m = parseNtfyLine(evt.data);
+        if (m) addMessage(m);
+      };
+      eventSource.onerror = () => {
+        setConn(false, 'Koneksi terputus, mencoba lagi…');
+      };
+    }catch(e){
+      setConn(false, 'Gagal terhubung ke server pesan.');
+    }
   }
-  function stopPolling(){
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = null;
+
+  function stopSubscription(){
+    if (eventSource){ eventSource.close(); eventSource = null; }
   }
+
   async function handleSend(){
     const text = msgInput.value.trim();
     if (!text || !currentUser || !activeContact) return;
     sendBtn.disabled = true;
     sendBtn.textContent = '…';
+    const topic = topicFor(currentUser, activeContact);
     const newMsg = { id: uid(), sender: currentUser, text: text, ts: Date.now() };
-    const ok = await appendMessageSafely(currentUser, activeContact, newMsg);
-    if (!ok){
+    try{
+      const res = await fetch(`${NTFY_BASE}/${topic}`, { method:'POST', body: JSON.stringify(newMsg) });
+      if (res.ok){
+        addMessage(newMsg); // tampil optimis; SSE akan mengabaikan duplikatnya
+        msgInput.value = '';
+      } else {
+        throw new Error('status ' + res.status);
+      }
+    }catch(e){
       msgInput.style.borderColor = 'var(--danger)';
-      msgInput.placeholder = 'Pesan gagal terkirim, coba lagi';
-      setTimeout(() => { msgInput.style.borderColor = ''; msgInput.placeholder = 'Ketik pesan…'; }, 2500);
-    } else {
-      msgInput.value = '';
+      msgInput.placeholder = 'Gagal terkirim, cek koneksi internet & coba lagi';
+      setTimeout(() => { msgInput.style.borderColor=''; msgInput.placeholder='Ketik pesan…'; }, 3000);
     }
-    lastRenderedCount = -1;
-    await pollMessages();
     sendBtn.disabled = false;
     sendBtn.textContent = 'KIRIM';
     msgInput.focus();
@@ -597,9 +990,9 @@
 
   // ---------------- LOGOUT / NAV ----------------
   function fullLogout(){
-    stopPolling();
-    currentUser = null; isAdmin = false; activeContact = null; lastRenderedCount = -1;
-    idInput.value = ''; passInput.value = '';
+    stopSubscription();
+    currentUser = null; isAdmin = false; activeContact = null;
+    idInput.value=''; passInput.value='';
     clearBox(errorBox);
     showScreen(loginScreen);
   }
@@ -611,20 +1004,15 @@
   addUserBtn.addEventListener('click', handleAddUser);
   newPassInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleAddUser(); });
   adminLogoutBtn.addEventListener('click', fullLogout);
-
   contactLogoutBtn.addEventListener('click', fullLogout);
 
-  backBtn.addEventListener('click', () => { stopPolling(); activeContact = null; showScreen(contactScreen); renderContactList(); });
+  backBtn.addEventListener('click', () => { stopSubscription(); activeContact = null; showScreen(contactScreen); renderContactList(); });
   sendBtn.addEventListener('click', handleSend);
   msgInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
 
-  // ---------------- INIT ----------------
-  (async function init(){
-    if (!checkStorageAvailable()) return;
-    await ensureAdmin();
-    showScreen(loginScreen);
-  })();
+  showScreen(loginScreen);
 })();
-</script>
+    </script>
 </body>
+
 </html>
