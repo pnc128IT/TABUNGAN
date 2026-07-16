@@ -1,404 +1,649 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tabungan — Catatan Keuangan Pribadi</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#0D2818;
-    --bg-panel:#123420;
-    --bg-panel-2:#153A25;
-    --ivory:#F5F1E4;
-    --ivory-dim:rgba(245,241,228,0.62);
-    --gold:#C9A227;
-    --gold-soft:rgba(201,162,39,0.16);
-    --sage:#8FA895;
-    --coral:#C1666B;
-    --coral-soft:rgba(193,102,107,0.16);
-    --line:rgba(245,241,228,0.12);
-    --radius:16px;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:
-      radial-gradient(circle at 15% 0%, #16452A 0%, transparent 45%),
-      radial-gradient(circle at 100% 10%, #0F3320 0%, transparent 40%),
-      var(--bg);
-    color:var(--ivory);
-    font-family:'Inter',sans-serif;
-    min-height:100vh;
-    padding:32px 20px 60px;
-  }
-  .wrap{max-width:1080px;margin:0 auto;}
+    <meta charset="UTF-8">
+    <title>SINYAL — Ruang Obrolan Terkunci</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0f1c;
+            --panel: #111a2c;
+            --panel-2: #16213a;
+            --line: #223050;
+            --text: #e7ecf3;
+            --muted: #7c8aa8;
+            --amber: #f2a93b;
+            --mint: #59d9b3;
+            --danger: #e5484d;
+        }
 
-  /* Header */
-  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap;}
-  .brand-eyebrow{font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--sage);font-weight:600;margin:0 0 6px;}
-  h1{font-family:'Fraunces',serif;font-weight:500;font-size:38px;margin:0;letter-spacing:-0.01em;}
-  .conn-status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ivory-dim);}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 3px var(--coral-soft);}
-  .dot.on{background:var(--sage);box-shadow:0 0 0 3px rgba(143,168,149,0.2);}
+        * {
+            box-sizing: border-box;
+        }
 
-  /* Grid */
-  .grid{display:grid;grid-template-columns:1.1fr 1.4fr;gap:20px;}
-  @media(max-width:820px){.grid{grid-template-columns:1fr;}}
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
 
-  .card{
-    background:linear-gradient(180deg,var(--bg-panel-2),var(--bg-panel));
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:24px;
-  }
+        body {
+            background: radial-gradient(circle at 20% 0%, #0d1526 0%, #080c16 60%), var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
 
-  /* Summary + ring */
-  .summary-top{display:flex;align-items:center;gap:22px;}
-  .ring-wrap{position:relative;width:132px;height:132px;flex:none;}
-  .ring-wrap svg{transform:rotate(-90deg);}
-  .ring-track{fill:none;stroke:rgba(245,241,228,0.1);stroke-width:10;}
-  .ring-fill{fill:none;stroke:var(--gold);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1);}
-  .ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-  .ring-pct{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;}
-  .ring-sub{font-size:10px;color:var(--ivory-dim);letter-spacing:0.05em;}
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
 
-  .saldo-label{font-size:12px;color:var(--ivory-dim);text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;}
-  .saldo-value{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:600;color:var(--gold);margin:0;}
-  .goal-line{font-size:12.5px;color:var(--ivory-dim);margin-top:4px;}
-  .goal-line button{background:none;border:none;color:var(--sage);text-decoration:underline;cursor:pointer;font-size:12.5px;padding:0;font-family:inherit;}
+        .app {
+            width: 100%;
+            max-width: 460px;
+        }
 
-  .stat-pair{display:flex;gap:12px;margin-top:20px;}
-  .stat-box{flex:1;background:rgba(245,241,228,0.04);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
-  .stat-box .lab{font-size:11px;color:var(--ivory-dim);text-transform:uppercase;letter-spacing:0.06em;}
-  .stat-box .val{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;margin-top:4px;}
-  .stat-box.in .val{color:var(--sage);}
-  .stat-box.out .val{color:var(--coral);}
+        /* ---------- Signature: signal bars ---------- */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
 
-  /* Settings */
-  .settings-toggle{
-    width:100%;text-align:left;background:none;border:none;border-top:1px dashed var(--line);
-    margin-top:18px;padding:16px 0 0;cursor:pointer;font-size:13px;color:var(--sage);font-weight:600;
-    font-family:'Inter',sans-serif;
-  }
-  .settings-body{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
-  label{font-size:12px;color:var(--ivory-dim);}
-  input[type=text],input[type=number],input[type=date]{
-    width:100%;background:rgba(245,241,228,0.06);border:1px solid var(--line);border-radius:10px;
-    color:var(--ivory);padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;outline:none;
-  }
-  input:focus{border-color:var(--gold);}
-  .btn{
-    border:none;border-radius:10px;padding:10px 16px;font-family:'Inter',sans-serif;font-weight:600;
-    font-size:13.5px;cursor:pointer;transition:transform .15s ease, opacity .15s ease;
-  }
-  .btn:active{transform:scale(0.97);}
-  .btn-gold{background:var(--gold);color:#1A1204;}
-  .btn-ghost{background:rgba(245,241,228,0.08);color:var(--ivory);}
-  .btn-ghost:hover{background:rgba(245,241,228,0.14);}
-  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+        .bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 22px;
+        }
 
-  /* Form */
-  .form-title{font-family:'Fraunces',serif;font-size:19px;margin:0 0 16px;font-weight:500;}
-  .field{margin-bottom:12px;}
-  .toggle-row{display:flex;gap:8px;margin-bottom:14px;}
-  .toggle{
-    flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid var(--line);
-    cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ivory-dim);background:rgba(245,241,228,0.03);
-  }
-  .toggle.active-in{background:var(--gold-soft);border-color:var(--gold);color:var(--gold);}
-  .toggle.active-out{background:var(--coral-soft);border-color:var(--coral);color:var(--coral);}
-  .form-msg{font-size:12.5px;margin-top:10px;min-height:16px;}
-  .form-msg.err{color:var(--coral);}
-  .form-msg.ok{color:var(--sage);}
+        .bars span {
+            width: 4px;
+            background: var(--amber);
+            border-radius: 2px;
+            animation: pulse 1.4s ease-in-out infinite;
+            opacity: .85;
+        }
 
-  /* History */
-  .hist-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-  table{width:100%;border-collapse:collapse;font-size:13.5px;}
-  th{text-align:left;color:var(--ivory-dim);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;padding:0 10px 10px;border-bottom:1px solid var(--line);}
-  td{padding:11px 10px;border-bottom:1px solid var(--line);}
-  tr:last-child td{border-bottom:none;}
-  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
-  .badge.setor{background:var(--gold-soft);color:var(--gold);}
-  .badge.tarik{background:var(--coral-soft);color:var(--coral);}
-  .amt{font-family:'JetBrains Mono',monospace;text-align:right;}
-  .amt.setor{color:var(--sage);}
-  .amt.tarik{color:var(--coral);}
-  .empty-state{text-align:center;padding:36px 10px;color:var(--ivory-dim);font-size:13.5px;}
-  .hist-scroll{max-height:360px;overflow-y:auto;}
-  .hist-scroll::-webkit-scrollbar{width:6px;}
-  .hist-scroll::-webkit-scrollbar-thumb{background:rgba(245,241,228,0.15);border-radius:6px;}
+        .bars span:nth-child(1) {
+            height: 6px;
+            animation-delay: 0s;
+        }
 
-  footer{text-align:center;margin-top:28px;font-size:11.5px;color:var(--ivory-dim);}
-  footer code{background:rgba(245,241,228,0.06);padding:2px 6px;border-radius:6px;}
-</style>
+        .bars span:nth-child(2) {
+            height: 12px;
+            animation-delay: .15s;
+        }
+
+        .bars span:nth-child(3) {
+            height: 18px;
+            animation-delay: .3s;
+        }
+
+        .bars span:nth-child(4) {
+            height: 12px;
+            animation-delay: .45s;
+        }
+
+        .bars span:nth-child(5) {
+            height: 22px;
+            animation-delay: .6s;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scaleY(.5);
+                opacity: .5;
+            }
+
+            50% {
+                transform: scaleY(1);
+                opacity: 1;
+            }
+        }
+
+        .brand-text {
+            letter-spacing: .14em;
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .brand-sub {
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: .12em;
+            margin-top: 2px;
+        }
+
+        /* ---------- Login panel ---------- */
+        .panel {
+            background: linear-gradient(180deg, var(--panel), var(--panel-2));
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--amber), transparent);
+        }
+
+        .eyebrow {
+            font-size: 11px;
+            letter-spacing: .18em;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            letter-spacing: .1em;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            margin-top: 16px;
+        }
+
+        input {
+            width: 100%;
+            background: #0c1424;
+            border: 1px solid var(--line);
+            color: var(--text);
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        input:focus {
+            border-color: var(--amber);
+            box-shadow: 0 0 0 3px rgba(242, 169, 59, .15);
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .row>div {
+            flex: 1;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 22px;
+            padding: 13px;
+            border-radius: 8px;
+            border: none;
+            background: var(--amber);
+            color: #181008;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            letter-spacing: .03em;
+            transition: filter .15s, transform .1s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        button:hover {
+            filter: brightness(1.08);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 14px;
+            line-height: 1.5;
+        }
+
+        .error {
+            margin-top: 14px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            background: rgba(229, 72, 77, .12);
+            border: 1px solid rgba(229, 72, 77, .35);
+            color: #ff9a9d;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        /* ---------- Chat screen ---------- */
+        .chat-wrap {
+            display: none;
+            width: 100%;
+            max-width: 560px;
+            height: 82vh;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-bottom: none;
+            border-radius: 14px 14px 0 0;
+            padding: 14px 18px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--mint);
+            box-shadow: 0 0 8px var(--mint);
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: .4;
+            }
+        }
+
+        .status-text {
+            font-size: 12px;
+            letter-spacing: .08em;
+            color: var(--muted);
+        }
+
+        .status-text b {
+            color: var(--text);
+        }
+
+        .logout {
+            background: none;
+            border: 1px solid var(--line);
+            color: var(--muted);
+            width: auto;
+            margin: 0;
+            padding: 7px 12px;
+            font-size: 11px;
+            border-radius: 7px;
+        }
+
+        .logout:hover {
+            color: var(--text);
+            border-color: var(--amber);
+            filter: none;
+        }
+
+        .feed {
+            flex: 1;
+            overflow-y: auto;
+            background: #0b1220;
+            border: 1px solid var(--line);
+            border-top: none;
+            border-bottom: none;
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feed::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .feed::-webkit-scrollbar-thumb {
+            background: var(--line);
+            border-radius: 8px;
+        }
+
+        .msg {
+            max-width: 78%;
+        }
+
+        .msg .meta {
+            font-size: 10.5px;
+            color: var(--muted);
+            letter-spacing: .06em;
+            margin-bottom: 3px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .msg .bubble {
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.45;
+            word-wrap: break-word;
+        }
+
+        .msg.me {
+            align-self: flex-end;
+        }
+
+        .msg.me .bubble {
+            background: rgba(89, 217, 179, .12);
+            border-color: rgba(89, 217, 179, .35);
+        }
+
+        .msg.me .meta {
+            justify-content: flex-end;
+        }
+
+        .msg .callsign {
+            font-weight: 700;
+        }
+
+        .msg.me .callsign {
+            color: var(--mint);
+        }
+
+        .msg:not(.me) .callsign {
+            color: var(--amber);
+        }
+
+        .empty {
+            margin: auto;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+            padding: 20px;
+        }
+
+        .empty .mono {
+            display: block;
+            font-size: 11px;
+            margin-top: 6px;
+            letter-spacing: .1em;
+        }
+
+        .composer {
+            display: flex;
+            gap: 8px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 0 0 14px 14px;
+            padding: 12px;
+        }
+
+        .composer input {
+            flex: 1;
+        }
+
+        .composer button {
+            width: auto;
+            margin: 0;
+            padding: 0 18px;
+        }
+
+        @media (max-width: 480px) {
+            .panel {
+                padding: 22px;
+            }
+
+            .chat-wrap {
+                height: 88vh;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<div class="wrap">
 
-  <header>
-    <div>
-      <p class="brand-eyebrow">Catatan Keuangan Pribadi</p>
-      <h1>Tabungan</h1>
-    </div>
-    <div class="conn-status">
-      <span class="dot" id="connDot"></span>
-      <span id="connText">Belum terhubung ke Google Sheets</span>
-    </div>
-  </header>
-
-  <div class="grid">
-    <!-- LEFT: Summary + Settings + Form -->
-    <div style="display:flex;flex-direction:column;gap:20px;">
-
-      <div class="card">
-        <div class="summary-top">
-          <div class="ring-wrap">
-            <svg width="132" height="132" viewBox="0 0 132 132">
-              <circle class="ring-track" cx="66" cy="66" r="56"></circle>
-              <circle class="ring-fill" id="ringFill" cx="66" cy="66" r="56"
-                stroke-dasharray="351.86" stroke-dashoffset="351.86"></circle>
-            </svg>
-            <div class="ring-label">
-              <div class="ring-pct" id="ringPct">0%</div>
-              <div class="ring-sub">DARI TARGET</div>
+    <div class="app" id="loginScreen">
+        <div class="brand">
+            <div class="bars"><span></span><span></span><span></span><span></span><span></span></div>
+            <div>
+                <div class="brand-text mono">SINYAL</div>
+                <div class="brand-sub mono">RUANG OBROLAN TERKUNCI</div>
             </div>
-          </div>
-          <div>
-            <p class="saldo-label">Saldo saat ini</p>
-            <p class="saldo-value" id="saldoValue">Rp 0</p>
-            <p class="goal-line">Target: <span id="goalDisplay">Rp 0</span> · <button id="editGoalBtn">ubah</button></p>
-          </div>
         </div>
 
-        <div class="stat-pair">
-          <div class="stat-box in"><div class="lab">Total setor</div><div class="val" id="totalIn">Rp 0</div></div>
-          <div class="stat-box out"><div class="lab">Total tarik</div><div class="val" id="totalOut">Rp 0</div></div>
-        </div>
+        <div class="panel">
+            <div class="eyebrow mono">AKSES MASUK</div>
+            <h1>Masuk dengan ID &amp; Password</h1>
 
-        <button type="button" class="settings-toggle" id="settingsToggle">⚙ Pengaturan koneksi Google Sheets ▾</button>
-        <div class="settings-body" id="settingsBody" style="display:none;">
-          <div>
-            <label>URL Web App (Google Apps Script)</label>
-            <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
-          </div>
-          <div>
-            <label>Target tabungan (Rp)</label>
-            <input type="number" id="goalInput" placeholder="10000000">
-          </div>
-          <button class="btn btn-gold" id="connectBtn">Simpan &amp; Hubungkan</button>
-        </div>
-      </div>
+            <label class="mono" for="idInput">ID Pengguna</label>
+            <input id="idInput" class="mono" type="text" placeholder="mis. budi92" autocomplete="off">
 
-      <div class="card">
-        <p class="form-title">Tambah transaksi</p>
-        <div class="toggle-row">
-          <div class="toggle active-in" id="toggleSetor">↓ Dana Masuk</div>
-          <div class="toggle" id="toggleTarik">↑ Dana Out</div>
+            <label class="mono" for="passInput">Password</label>
+            <input id="passInput" class="mono" type="password" placeholder="••••••••" autocomplete="off">
+
+            <div class="error mono" id="errorBox"></div>
+
+            <button id="loginBtn" class="mono">MASUK / DAFTAR</button>
+            <div class="hint">ID baru akan otomatis terdaftar dengan password yang kamu masukkan. ID yang sudah ada
+                wajib memakai password yang sama untuk masuk kembali. Semua pengguna yang login masuk ke ruang obrolan
+                yang sama.</div>
         </div>
-        <div class="field">
-          <label>Jumlah (Rp)</label>
-          <input type="number" id="fJumlah" placeholder="100000">
-        </div>
-        <button class="btn btn-gold" id="saveBtn" style="width:100%;">Simpan transaksi</button>
-        <div class="form-msg" id="formMsg"></div>
-      </div>
     </div>
 
-    <!-- RIGHT: History -->
-    <div class="card">
-      <div class="hist-head">
-        <p class="form-title" style="margin:0;">Riwayat transaksi</p>
-        <button class="btn btn-ghost" id="refreshBtn">↻ Segarkan</button>
-      </div>
-      <div class="hist-scroll">
-        <table>
-          <thead>
-            <tr><th>No</th><th>Dana Masuk</th><th>Dana Out</th><th style="text-align:right;">Saldo Akhir</th></tr>
-          </thead>
-          <tbody id="histBody"></tbody>
-        </table>
-        <div class="empty-state" id="emptyState">Belum ada transaksi. Hubungkan Google Sheets lalu tambahkan transaksi pertamamu.</div>
-      </div>
+    <div class="chat-wrap" id="chatScreen">
+        <div class="chat-header">
+            <div class="status">
+                <div class="dot"></div>
+                <div class="status-text mono">TERHUBUNG SEBAGAI <b id="whoAmI"></b></div>
+            </div>
+            <button class="logout mono" id="logoutBtn">KELUAR</button>
+        </div>
+        <div class="feed" id="feed">
+            <div class="empty mono">Belum ada transmisi.<span>KIRIM PESAN PERTAMA</span></div>
+        </div>
+        <div class="composer">
+            <input id="msgInput" class="mono" type="text" placeholder="Ketik pesan…" autocomplete="off">
+            <button id="sendBtn" class="mono">KIRIM</button>
+        </div>
     </div>
-  </div>
 
-  <footer>
-    Data disimpan di Google Sheets milikmu sendiri. Belum diatur? Buka panel <code>⚙ Pengaturan</code> di atas untuk memasukkan URL Web App.
-  </footer>
-</div>
+    <script>
+        (function(){
+  const USERS_KEY = 'sinyal-users';
+  const MSG_KEY = 'sinyal-messages';
+  const MAX_MESSAGES = 300;
+  let currentUser = null;
+  let pollTimer = null;
+  let lastRenderedCount = -1;
 
-<script>
-  // ---------- CONFIG ----------
-  // Kamu bisa langsung isi API_URL di sini supaya tidak perlu diketik tiap buka file,
-  // atau isi lewat panel "Pengaturan" di halaman (berlaku untuk sesi berjalan).
-  const CONFIG = {
-    API_URL: "https://script.google.com/macros/s/AKfycbySgwa6efUhkxD6L61zXZNuEuDJTDU5iR6eKIYQLPd_Q8oY-AaJlTQqaRWg7Tbm7ecN/exec", // <-- tempel URL Web App Google Apps Script kamu di sini, contoh: "https://script.google.com/macros/s/AKfycbz_kksg1x9oq_G2EwEk5MdsS8BxiAkCd3q8ggK-Qvhy/dev"
-    GOAL: 10000000
-  };
+  const loginScreen = document.getElementById('loginScreen');
+  const chatScreen = document.getElementById('chatScreen');
+  const idInput = document.getElementById('idInput');
+  const passInput = document.getElementById('passInput');
+  const errorBox = document.getElementById('errorBox');
+  const loginBtn = document.getElementById('loginBtn');
+  const whoAmI = document.getElementById('whoAmI');
+  const feed = document.getElementById('feed');
+  const msgInput = document.getElementById('msgInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
 
-  const state = {
-    apiUrl: CONFIG.API_URL,
-    goal: CONFIG.GOAL,
-    jenis: "Setor",
-    rows: []
-  };
-
-  const el = id => document.getElementById(id);
-  const rupiah = n => "Rp " + Number(n || 0).toLocaleString("id-ID");
-
-  // ---------- Settings ----------
-  // ---------- Settings toggle ----------
-  el("settingsToggle").addEventListener("click", () => {
-    const body = el("settingsBody");
-    const isOpen = body.style.display !== "none";
-    body.style.display = isOpen ? "none" : "flex";
-  });
-
-  el("apiUrlInput").value = state.apiUrl;
-  el("goalInput").value = state.goal;
-
-  el("connectBtn").addEventListener("click", () => {
-    const url = el("apiUrlInput").value.trim();
-    const goal = Number(el("goalInput").value) || state.goal;
-    state.apiUrl = url;
-    state.goal = goal;
-    if (url) {
-      setConn(true);
-      loadData();
-    } else {
-      setConn(false);
-    }
-  });
-
-  el("editGoalBtn").addEventListener("click", () => {
-    el("settingsBody").style.display = "flex";
-    el("goalInput").focus();
-  });
-
-  function setConn(ok) {
-    el("connDot").classList.toggle("on", ok);
-    el("connText").textContent = ok ? "Terhubung ke Google Sheets" : "Belum terhubung ke Google Sheets";
+  function showError(text){
+    errorBox.textContent = text;
+    errorBox.classList.add('show');
+  }
+  function clearError(){
+    errorBox.classList.remove('show');
+    errorBox.textContent = '';
   }
 
-  // ---------- Toggle jenis ----------
-  el("toggleSetor").addEventListener("click", () => {
-    state.jenis = "masuk";
-    el("toggleSetor").classList.add("active-in");
-    el("toggleTarik").classList.remove("active-out");
-  });
-  el("toggleTarik").addEventListener("click", () => {
-    state.jenis = "keluar";
-    el("toggleTarik").classList.add("active-out");
-    el("toggleSetor").classList.remove("active-in");
-  });
+  async function getUsers(){
+    try{
+      const res = await window.storage.get(USERS_KEY, true);
+      return res && res.value ? JSON.parse(res.value) : {};
+    }catch(e){ return {}; }
+  }
+  async function saveUsers(users){
+    try{ await window.storage.set(USERS_KEY, JSON.stringify(users), true); }
+    catch(e){ console.error('gagal menyimpan pengguna', e); }
+  }
+  async function getMessages(){
+    try{
+      const res = await window.storage.get(MSG_KEY, true);
+      return res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ return []; }
+  }
+  async function saveMessages(list){
+    const trimmed = list.slice(-MAX_MESSAGES);
+    try{ await window.storage.set(MSG_KEY, JSON.stringify(trimmed), true); }
+    catch(e){ console.error('gagal menyimpan pesan', e); }
+  }
 
-  // ---------- Save transaction ----------
-  el("saveBtn").addEventListener("click", async () => {
-    const jumlah = Number(el("fJumlah").value);
-    const msg = el("formMsg");
+  function fmtTime(ts){
+    const d = new Date(ts);
+    return d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+  }
 
-    if (!jumlah || jumlah <= 0) {
-      msg.textContent = "Isi jumlah yang valid.";
-      msg.className = "form-msg err";
+  function renderMessages(list){
+    if(list.length === lastRenderedCount) return;
+    lastRenderedCount = list.length;
+    if(list.length === 0){
+      feed.innerHTML = '<div class="empty mono">Belum ada transmisi.<span>KIRIM PESAN PERTAMA</span></div>';
       return;
     }
-    if (!state.apiUrl) {
-      msg.textContent = "Hubungkan ke Google Sheets dulu lewat panel Pengaturan.";
-      msg.className = "form-msg err";
+    const wasAtBottom = feed.scrollTop + feed.clientHeight >= feed.scrollHeight - 40;
+    feed.innerHTML = list.map(m => {
+      const mine = m.sender === currentUser;
+      return `<div class="msg ${mine ? 'me' : ''}">
+        <div class="meta"><span class="callsign">${escapeHtml(m.sender)}</span><span>${fmtTime(m.ts)}</span></div>
+        <div class="bubble">${escapeHtml(m.text)}</div>
+      </div>`;
+    }).join('');
+    if(wasAtBottom || lastRenderedCount === list.length){
+      feed.scrollTop = feed.scrollHeight;
+    }
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function pollMessages(){
+    const list = await getMessages();
+    renderMessages(list);
+  }
+
+  function startPolling(){
+    pollMessages();
+    pollTimer = setInterval(pollMessages, 2500);
+  }
+  function stopPolling(){
+    if(pollTimer) clearInterval(pollTimer);
+  }
+
+  async function handleLogin(){
+    clearError();
+    const id = idInput.value.trim();
+    const pass = passInput.value;
+    if(!id || !pass){
+      showError('ID dan password wajib diisi.');
       return;
     }
-
-    el("saveBtn").disabled = true;
-    msg.textContent = "Menyimpan...";
-    msg.className = "form-msg";
-
-    const payload = state.jenis === "masuk"
-      ? { masuk: jumlah, keluar: 0 }
-      : { masuk: 0, keluar: jumlah };
-
-    try {
-      await fetch(state.apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      });
-      msg.textContent = "Tersimpan.";
-      msg.className = "form-msg ok";
-      el("fJumlah").value = "";
-      await loadData();
-    } catch (e) {
-      msg.textContent = "Gagal menyimpan. Cek URL Web App dan koneksi internet.";
-      msg.className = "form-msg err";
-    } finally {
-      el("saveBtn").disabled = false;
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'MEMERIKSA…';
+    try{
+      const users = await getUsers();
+      if(users[id] !== undefined){
+        if(users[id] !== pass){
+          showError('Password salah untuk ID ini.');
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'MASUK / DAFTAR';
+          return;
+        }
+      } else {
+        users[id] = pass;
+        await saveUsers(users);
+      }
+      currentUser = id;
+      whoAmI.textContent = id.toUpperCase();
+      loginScreen.style.display = 'none';
+      chatScreen.style.display = 'flex';
+      lastRenderedCount = -1;
+      startPolling();
+    }catch(e){
+      showError('Terjadi kesalahan. Coba lagi.');
     }
-  });
-
-  // ---------- Load data ----------
-  el("refreshBtn").addEventListener("click", loadData);
-
-  async function loadData() {
-    if (!state.apiUrl) return;
-    try {
-      const res = await fetch(state.apiUrl);
-      const json = await res.json();
-      state.saldoAwal = Number(json.saldoAwal) || 0;
-      state.rows = (json.data || []).map(r => ({
-        no: r.no,
-        masuk: Number(r.masuk) || 0,
-        keluar: Number(r.keluar) || 0,
-        saldoAkhir: Number(r.saldoAkhir) || 0
-      })).sort((a, b) => b.no - a.no);
-      setConn(true);
-      render();
-    } catch (e) {
-      setConn(false);
-    }
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'MASUK / DAFTAR';
   }
 
-  function render() {
-    const body = el("histBody");
-    const empty = el("emptyState");
-    body.innerHTML = "";
-
-    if (state.rows.length === 0) {
-      empty.style.display = "block";
-    } else {
-      empty.style.display = "none";
-      state.rows.forEach(r => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${r.no}</td>
-          <td class="amt setor">${r.masuk ? "+ " + rupiah(r.masuk) : "-"}</td>
-          <td class="amt tarik">${r.keluar ? "- " + rupiah(r.keluar) : "-"}</td>
-          <td class="amt">${rupiah(r.saldoAkhir)}</td>
-        `;
-        body.appendChild(tr);
-      });
-    }
-
-    const totalIn = state.rows.reduce((s, r) => s + r.masuk, 0);
-    const totalOut = state.rows.reduce((s, r) => s + r.keluar, 0);
-    const saldo = state.rows.length > 0 ? state.rows[0].saldoAkhir : (state.saldoAwal || 0);
-
-    el("totalIn").textContent = rupiah(totalIn);
-    el("totalOut").textContent = rupiah(totalOut);
-    el("saldoValue").textContent = rupiah(saldo);
-    el("goalDisplay").textContent = rupiah(state.goal);
-
-    const pct = Math.max(0, Math.min(1, saldo / (state.goal || 1)));
-    const circumference = 351.86;
-    el("ringFill").style.strokeDashoffset = circumference - pct * circumference;
-    el("ringPct").textContent = Math.round(pct * 100) + "%";
+  async function handleSend(){
+    const text = msgInput.value.trim();
+    if(!text || !currentUser) return;
+    sendBtn.disabled = true;
+    const list = await getMessages();
+    list.push({ sender: currentUser, text: text, ts: Date.now() });
+    await saveMessages(list);
+    msgInput.value = '';
+    lastRenderedCount = -1;
+    await pollMessages();
+    sendBtn.disabled = false;
+    msgInput.focus();
   }
 
-  // Auto-connect if API_URL was pre-filled in CONFIG
-  if (state.apiUrl) {
-    setConn(true);
-    loadData();
+  function handleLogout(){
+    stopPolling();
+    currentUser = null;
+    lastRenderedCount = -1;
+    idInput.value = '';
+    passInput.value = '';
+    msgInput.value = '';
+    clearError();
+    chatScreen.style.display = 'none';
+    loginScreen.style.display = 'block';
   }
-</script>
+
+  loginBtn.addEventListener('click', handleLogin);
+  passInput.addEventListener('keydown', e => { if(e.key === 'Enter') handleLogin(); });
+  idInput.addEventListener('keydown', e => { if(e.key === 'Enter') passInput.focus(); });
+  sendBtn.addEventListener('click', handleSend);
+  msgInput.addEventListener('keydown', e => { if(e.key === 'Enter') handleSend(); });
+  logoutBtn.addEventListener('click', handleLogout);
+})();
+    </script>
 </body>
+
 </html>
