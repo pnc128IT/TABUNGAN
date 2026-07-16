@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>SINYAL — Ruang Obrolan Terkunci</title>
+<title>SINYAL — Obrolan Pribadi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -31,6 +31,19 @@
   }
   .mono{ font-family:'JetBrains Mono', monospace; }
   .app{ width:100%; max-width:460px; }
+  .hidden{ display:none !important; }
+
+  /* ---------- fatal banner ---------- */
+  .fatal{
+    position:fixed; inset:0; background:rgba(5,8,16,.96); z-index:50;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .fatal-box{
+    max-width:440px; background:var(--panel); border:1px solid var(--danger);
+    border-radius:14px; padding:26px; text-align:left;
+  }
+  .fatal-box h2{ color:#ff9a9d; font-size:16px; margin:0 0 10px 0; }
+  .fatal-box p{ color:var(--muted); font-size:13.5px; line-height:1.6; margin:0 0 8px 0; }
 
   /* ---------- Signature: signal bars ---------- */
   .brand{ display:flex; align-items:center; gap:12px; margin-bottom: 28px; }
@@ -49,7 +62,7 @@
   .brand-text{ letter-spacing:.14em; font-weight:800; font-size:15px; }
   .brand-sub{ color:var(--muted); font-size:11px; letter-spacing:.12em; margin-top:2px; }
 
-  /* ---------- Login panel ---------- */
+  /* ---------- panels shared ---------- */
   .panel{
     background: linear-gradient(180deg, var(--panel), var(--panel-2));
     border:1px solid var(--line);
@@ -64,10 +77,7 @@
     position:absolute; inset:0 0 auto 0; height:2px;
     background: linear-gradient(90deg, transparent, var(--amber), transparent);
   }
-  .eyebrow{
-    font-size:11px; letter-spacing:.18em; color:var(--muted); text-transform:uppercase;
-    margin-bottom: 6px;
-  }
+  .eyebrow{ font-size:11px; letter-spacing:.18em; color:var(--muted); text-transform:uppercase; margin-bottom: 6px; }
   h1{ font-size:20px; margin:0 0 20px 0; font-weight:700; }
   label{ display:block; font-size:11px; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; margin-bottom:6px; margin-top:16px;}
   input{
@@ -76,8 +86,6 @@
     outline:none; transition: border-color .15s, box-shadow .15s;
   }
   input:focus{ border-color: var(--amber); box-shadow: 0 0 0 3px rgba(242,169,59,.15); }
-  .row{ display:flex; gap:10px; }
-  .row > div{ flex:1; }
   button{
     width:100%; margin-top:22px; padding:13px; border-radius:8px; border:none;
     background: var(--amber); color:#181008; font-weight:700; font-size:14px;
@@ -87,6 +95,9 @@
   button:hover{ filter:brightness(1.08); }
   button:active{ transform: translateY(1px); }
   button:disabled{ opacity:.6; cursor:not-allowed; }
+  .btn-ghost{ background:none; border:1px solid var(--line); color:var(--muted); }
+  .btn-ghost:hover{ color:var(--text); border-color:var(--amber); filter:none; }
+  .btn-danger{ background: rgba(229,72,77,.14); color:#ff9a9d; border:1px solid rgba(229,72,77,.4); }
   .hint{ color:var(--muted); font-size:12px; margin-top:14px; line-height:1.5; }
   .error{
     margin-top:14px; padding:10px 12px; border-radius:8px; font-size:12.5px;
@@ -94,42 +105,83 @@
     display:none;
   }
   .error.show{ display:block; }
+  .success{
+    margin-top:14px; padding:10px 12px; border-radius:8px; font-size:12.5px;
+    background: rgba(89,217,179,.1); border:1px solid rgba(89,217,179,.35); color:var(--mint);
+    display:none;
+  }
+  .success.show{ display:block; }
+  .badge{
+    display:inline-block; font-size:10px; letter-spacing:.08em; padding:3px 8px;
+    border-radius:20px; background:rgba(242,169,59,.15); color:var(--amber); border:1px solid rgba(242,169,59,.4);
+    margin-left:8px; vertical-align:middle;
+  }
 
-  /* ---------- Chat screen ---------- */
-  .chat-wrap{ display:none; width:100%; max-width:560px; height:82vh; flex-direction:column; }
-  .chat-header{
-    display:flex; align-items:center; justify-content:space-between;
-    background: var(--panel); border:1px solid var(--line); border-bottom:none;
+  /* ---------- header bar (admin & contacts & chat) ---------- */
+  .wrap{ display:none; width:100%; max-width:560px; flex-direction:column; }
+  .bar{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background: var(--panel); border:1px solid var(--line);
     border-radius:14px 14px 0 0; padding:14px 18px;
   }
-  .status{ display:flex; align-items:center; gap:10px; }
-  .dot{ width:8px; height:8px; border-radius:50%; background:var(--mint); box-shadow:0 0 8px var(--mint); animation: blink 2s infinite; }
+  .bar-left{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .icon-btn{
+    width:34px; height:34px; border-radius:8px; border:1px solid var(--line); background:#0c1424;
+    color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+    font-size:16px; margin:0; padding:0;
+  }
+  .icon-btn:hover{ color:var(--text); border-color:var(--amber); filter:none; }
+  .title-block{ min-width:0; }
+  .title-block .name{ font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .title-block .sub{ font-size:11px; color:var(--muted); letter-spacing:.06em; display:flex; align-items:center; gap:6px; }
+  .dot{ width:7px; height:7px; border-radius:50%; background:var(--mint); box-shadow:0 0 8px var(--mint); animation: blink 2s infinite; }
   @keyframes blink{ 50%{ opacity:.4; } }
-  .status-text{ font-size:12px; letter-spacing:.08em; color:var(--muted); }
-  .status-text b{ color:var(--text); }
-  .logout{ background:none; border:1px solid var(--line); color:var(--muted); width:auto; margin:0; padding:7px 12px; font-size:11px; border-radius:7px; }
-  .logout:hover{ color:var(--text); border-color:var(--amber); filter:none; }
+  .bar .icon-btn.logout{ width:auto; padding:0 12px; font-size:11px; font-family:'JetBrains Mono',monospace; letter-spacing:.06em; }
 
+  /* ---------- admin screen ---------- */
+  .body-panel{
+    background:#0b1220; border:1px solid var(--line); border-top:none;
+    padding:18px; max-height:60vh; overflow-y:auto;
+  }
+  .add-form{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+  .add-form input{ flex:1; min-width:120px; }
+  .add-form button{ width:auto; margin:0; padding:0 16px; align-self:stretch; }
+  .user-row{
+    display:flex; align-items:center; justify-content:space-between; padding:10px 12px;
+    border:1px solid var(--line); border-radius:8px; margin-bottom:8px; background:var(--panel-2);
+  }
+  .user-row .uid{ font-family:'JetBrains Mono',monospace; font-size:13px; }
+  .user-row button{ width:auto; margin:0; padding:6px 10px; font-size:11px; }
+  .footer-bar{ border:1px solid var(--line); border-top:none; border-radius:0 0 14px 14px; padding:14px 18px; background:var(--panel); }
+
+  /* ---------- contact list ---------- */
+  .contact-row{
+    display:flex; align-items:center; gap:12px; padding:12px; border:1px solid var(--line);
+    border-radius:10px; margin-bottom:8px; background:var(--panel-2); cursor:pointer; transition:border-color .15s;
+  }
+  .contact-row:hover{ border-color: var(--amber); }
+  .avatar{
+    width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, var(--amber), #c97a1f);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; color:#181008; flex-shrink:0;
+  }
+  .contact-name{ font-weight:600; font-size:14px; }
+  .contact-hint{ font-size:11px; color:var(--muted); }
+  .empty{ text-align:center; color:var(--muted); font-size:13px; padding:30px 10px; }
+  .empty span{ display:block; font-size:11px; margin-top:6px; letter-spacing:.1em; font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- chat feed ---------- */
   .feed{
-    flex:1; overflow-y:auto; background:#0b1220; border:1px solid var(--line); border-top:none; border-bottom:none;
+    height:52vh; overflow-y:auto; background:#0b1220; border:1px solid var(--line); border-top:none; border-bottom:none;
     padding: 16px 18px; display:flex; flex-direction:column; gap:12px;
   }
   .feed::-webkit-scrollbar{ width:8px; }
   .feed::-webkit-scrollbar-thumb{ background: var(--line); border-radius:8px; }
-
   .msg{ max-width:78%; }
   .msg .meta{ font-size:10.5px; color:var(--muted); letter-spacing:.06em; margin-bottom:3px; display:flex; gap:8px; }
   .msg .bubble{ background: var(--panel-2); border:1px solid var(--line); padding:9px 12px; border-radius:10px; font-size:14px; line-height:1.45; word-wrap:break-word; }
   .msg.me{ align-self:flex-end; }
   .msg.me .bubble{ background: rgba(89,217,179,.12); border-color: rgba(89,217,179,.35); }
   .msg.me .meta{ justify-content:flex-end; }
-  .msg .callsign{ font-weight:700; }
-  .msg.me .callsign{ color: var(--mint); }
-  .msg:not(.me) .callsign{ color: var(--amber); }
-
-  .empty{ margin:auto; text-align:center; color:var(--muted); font-size:13px; padding:20px; }
-  .empty .mono{ display:block; font-size:11px; margin-top:6px; letter-spacing:.1em; }
-
   .composer{
     display:flex; gap:8px; background: var(--panel); border:1px solid var(--line); border-radius:0 0 14px 14px; padding:12px;
   }
@@ -138,49 +190,97 @@
 
   @media (max-width: 480px){
     .panel{ padding:22px; }
-    .chat-wrap{ height:88vh; }
+    .feed{ height:56vh; }
   }
 </style>
 </head>
 <body>
 
+<div class="fatal hidden" id="fatalBanner">
+  <div class="fatal-box">
+    <h2 class="mono">PENYIMPANAN TIDAK TERSEDIA</h2>
+    <p>Aplikasi ini butuh fitur penyimpanan bawaan Claude untuk mengirim &amp; menyimpan pesan antar akun.</p>
+    <p>Kemungkinan file ini dibuka di luar Claude (misalnya sudah diunduh lalu dibuka langsung dua kali dari komputer/HP). Buka kembali melalui jendela pratinjau di Claude, jangan lewat file yang sudah diunduh, agar pesan bisa terkirim dan tersinkron ke akun lain.</p>
+  </div>
+</div>
+
+<!-- LOGIN -->
 <div class="app" id="loginScreen">
   <div class="brand">
     <div class="bars"><span></span><span></span><span></span><span></span><span></span></div>
     <div>
       <div class="brand-text mono">SINYAL</div>
-      <div class="brand-sub mono">RUANG OBROLAN TERKUNCI</div>
+      <div class="brand-sub mono">OBROLAN PRIBADI</div>
     </div>
   </div>
-
   <div class="panel">
     <div class="eyebrow mono">AKSES MASUK</div>
-    <h1>Masuk dengan ID &amp; Password</h1>
-
-    <label class="mono" for="idInput">ID Pengguna</label>
-    <input id="idInput" class="mono" type="text" placeholder="mis. budi92" autocomplete="off">
-
+    <h1>Masuk ke Akun</h1>
+    <label class="mono" for="idInput">ID</label>
+    <input id="idInput" class="mono" type="text" placeholder="ID akun" autocomplete="off">
     <label class="mono" for="passInput">Password</label>
     <input id="passInput" class="mono" type="password" placeholder="••••••••" autocomplete="off">
-
     <div class="error mono" id="errorBox"></div>
-
-    <button id="loginBtn" class="mono">MASUK / DAFTAR</button>
-    <div class="hint">ID baru akan otomatis terdaftar dengan password yang kamu masukkan. ID yang sudah ada wajib memakai password yang sama untuk masuk kembali. Semua pengguna yang login masuk ke ruang obrolan yang sama.</div>
+    <button id="loginBtn" class="mono">MASUK</button>
+    <div class="hint">Akun hanya bisa dibuat oleh admin. Kalau belum punya akun, minta admin membuatkannya. Admin masuk dengan ID <b>admin</b> (password default: <b>admin123</b> — segera ganti setelah masuk pertama kali dari kode sumbernya bila perlu diamankan lebih lanjut).</div>
   </div>
 </div>
 
-<div class="chat-wrap" id="chatScreen">
-  <div class="chat-header">
-    <div class="status">
-      <div class="dot"></div>
-      <div class="status-text mono">TERHUBUNG SEBAGAI <b id="whoAmI"></b></div>
+<!-- ADMIN PANEL -->
+<div class="wrap" id="adminScreen">
+  <div class="bar">
+    <div class="bar-left">
+      <div class="title-block">
+        <div class="name mono">PANEL ADMIN <span class="badge mono">ADMIN</span></div>
+        <div class="sub mono"><span class="dot"></span>Kelola akun pengguna</div>
+      </div>
     </div>
-    <button class="logout mono" id="logoutBtn">KELUAR</button>
+    <button class="icon-btn logout mono" id="adminLogoutBtn">KELUAR</button>
   </div>
-  <div class="feed" id="feed">
-    <div class="empty mono">Belum ada transmisi.<span>KIRIM PESAN PERTAMA</span></div>
+  <div class="body-panel">
+    <div class="add-form">
+      <input id="newIdInput" class="mono" type="text" placeholder="ID baru">
+      <input id="newPassInput" class="mono" type="text" placeholder="Password baru">
+      <button id="addUserBtn" class="mono">BUAT AKUN</button>
+    </div>
+    <div class="error mono" id="adminErrorBox"></div>
+    <div class="success mono" id="adminSuccessBox"></div>
+    <div id="userList"></div>
   </div>
+  <div class="footer-bar mono" style="color:var(--muted); font-size:11px; letter-spacing:.06em;">
+    DAFTAR AKUN AKAN LANGSUNG BISA DIPAKAI LOGIN OLEH PEMILIKNYA
+  </div>
+</div>
+
+<!-- CONTACT LIST -->
+<div class="wrap" id="contactScreen">
+  <div class="bar">
+    <div class="bar-left">
+      <div class="title-block">
+        <div class="name mono" id="contactWhoAmI"></div>
+        <div class="sub mono"><span class="dot"></span>Pilih kontak</div>
+      </div>
+    </div>
+    <button class="icon-btn logout mono" id="contactLogoutBtn">KELUAR</button>
+  </div>
+  <div class="body-panel" id="contactList"></div>
+  <div class="footer-bar mono" style="color:var(--muted); font-size:11px; letter-spacing:.06em;">
+    OBROLAN BERSIFAT PRIBADI — HANYA ANTARA ANDA &amp; KONTAK TERPILIH
+  </div>
+</div>
+
+<!-- PRIVATE CHAT -->
+<div class="wrap" id="chatScreen">
+  <div class="bar">
+    <div class="bar-left">
+      <button class="icon-btn" id="backBtn">&#8592;</button>
+      <div class="title-block">
+        <div class="name mono" id="chatWithName"></div>
+        <div class="sub mono"><span class="dot"></span>Obrolan pribadi</div>
+      </div>
+    </div>
+  </div>
+  <div class="feed" id="feed"></div>
   <div class="composer">
     <input id="msgInput" class="mono" type="text" placeholder="Ketik pesan…" autocomplete="off">
     <button id="sendBtn" class="mono">KIRIM</button>
@@ -189,99 +289,113 @@
 
 <script>
 (function(){
+  const ADMIN_KEY = 'sinyal-admin';
   const USERS_KEY = 'sinyal-users';
-  const MSG_KEY = 'sinyal-messages';
   const MAX_MESSAGES = 300;
+  const DEFAULT_ADMIN = { id: 'admin', password: 'admin123' };
+
   let currentUser = null;
+  let isAdmin = false;
+  let activeContact = null;
   let pollTimer = null;
   let lastRenderedCount = -1;
 
+  // ---- DOM refs ----
+  const fatalBanner = document.getElementById('fatalBanner');
   const loginScreen = document.getElementById('loginScreen');
+  const adminScreen = document.getElementById('adminScreen');
+  const contactScreen = document.getElementById('contactScreen');
   const chatScreen = document.getElementById('chatScreen');
+
   const idInput = document.getElementById('idInput');
   const passInput = document.getElementById('passInput');
   const errorBox = document.getElementById('errorBox');
   const loginBtn = document.getElementById('loginBtn');
-  const whoAmI = document.getElementById('whoAmI');
+
+  const newIdInput = document.getElementById('newIdInput');
+  const newPassInput = document.getElementById('newPassInput');
+  const addUserBtn = document.getElementById('addUserBtn');
+  const adminErrorBox = document.getElementById('adminErrorBox');
+  const adminSuccessBox = document.getElementById('adminSuccessBox');
+  const userList = document.getElementById('userList');
+  const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+
+  const contactWhoAmI = document.getElementById('contactWhoAmI');
+  const contactList = document.getElementById('contactList');
+  const contactLogoutBtn = document.getElementById('contactLogoutBtn');
+
+  const backBtn = document.getElementById('backBtn');
+  const chatWithName = document.getElementById('chatWithName');
   const feed = document.getElementById('feed');
   const msgInput = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
 
-  function showError(text){
-    errorBox.textContent = text;
-    errorBox.classList.add('show');
-  }
-  function clearError(){
-    errorBox.classList.remove('show');
-    errorBox.textContent = '';
+  function showScreen(el){
+    [loginScreen, adminScreen, contactScreen, chatScreen].forEach(s => {
+      s.style.display = 'none';
+    });
+    el.style.display = (el === loginScreen) ? 'block' : 'flex';
   }
 
-  async function getUsers(){
+  function checkStorageAvailable(){
+    if (typeof window.storage === 'undefined' || !window.storage || typeof window.storage.get !== 'function'){
+      fatalBanner.classList.remove('hidden');
+      loginBtn.disabled = true;
+      return false;
+    }
+    return true;
+  }
+
+  // ---- storage helpers ----
+  async function getJSON(key, fallback){
     try{
-      const res = await window.storage.get(USERS_KEY, true);
-      return res && res.value ? JSON.parse(res.value) : {};
-    }catch(e){ return {}; }
+      const res = await window.storage.get(key, true);
+      return res && res.value ? JSON.parse(res.value) : fallback;
+    }catch(e){ return fallback; }
   }
-  async function saveUsers(users){
-    try{ await window.storage.set(USERS_KEY, JSON.stringify(users), true); }
-    catch(e){ console.error('gagal menyimpan pengguna', e); }
-  }
-  async function getMessages(){
+  async function setJSON(key, value){
     try{
-      const res = await window.storage.get(MSG_KEY, true);
-      return res && res.value ? JSON.parse(res.value) : [];
-    }catch(e){ return []; }
+      const res = await window.storage.set(key, JSON.stringify(value), true);
+      return !!res;
+    }catch(e){ console.error('gagal menyimpan', key, e); return false; }
   }
-  async function saveMessages(list){
+
+  async function ensureAdmin(){
+    const admin = await getJSON(ADMIN_KEY, null);
+    if (!admin){
+      await setJSON(ADMIN_KEY, DEFAULT_ADMIN);
+      return DEFAULT_ADMIN;
+    }
+    return admin;
+  }
+  async function getUsers(){ return await getJSON(USERS_KEY, {}); }
+  async function saveUsers(users){ return await setJSON(USERS_KEY, users); }
+
+  function pairKey(a, b){
+    return 'sinyal-dm:' + [a, b].sort().join('::');
+  }
+  async function getMessages(a, b){ return await getJSON(pairKey(a, b), []); }
+  async function saveMessages(a, b, list){
     const trimmed = list.slice(-MAX_MESSAGES);
-    try{ await window.storage.set(MSG_KEY, JSON.stringify(trimmed), true); }
-    catch(e){ console.error('gagal menyimpan pesan', e); }
+    return await setJSON(pairKey(a, b), trimmed);
   }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 
-  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
-
-  // Kirim pesan dengan aman: beberapa akun bisa mengirim di saat yang sama.
-  // Karena penyimpanan bersama pakai pola "ambil-lalu-simpan", tulisan yang
-  // hampir bersamaan bisa saling menimpa. Fungsi ini mengambil ulang data
-  // terbaru sebelum menyimpan, lalu memverifikasi pesan benar-benar tersimpan,
-  // dan mengulang beberapa kali bila ternyata tertimpa oleh akun lain.
-  async function appendMessageSafely(newMsg){
+  // Kirim dengan verifikasi + retry supaya pesan tidak hilang bila
+  // kedua akun menulis di waktu yang berdekatan.
+  async function appendMessageSafely(a, b, newMsg){
     let attempts = 0;
-    while(attempts < 5){
-      const list = await getMessages();
-      if(!list.some(m => m.id === newMsg.id)) list.push(newMsg);
-      await saveMessages(list);
-      const check = await getMessages();
-      if(check.some(m => m.id === newMsg.id)) return true;
+    while (attempts < 5){
+      const list = await getMessages(a, b);
+      if (!list.some(m => m.id === newMsg.id)) list.push(newMsg);
+      const ok = await saveMessages(a, b, list);
+      if (ok){
+        const check = await getMessages(a, b);
+        if (check.some(m => m.id === newMsg.id)) return true;
+      }
       attempts++;
     }
     return false;
-  }
-
-  function fmtTime(ts){
-    const d = new Date(ts);
-    return d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
-  }
-
-  function renderMessages(list){
-    if(list.length === lastRenderedCount) return;
-    lastRenderedCount = list.length;
-    if(list.length === 0){
-      feed.innerHTML = '<div class="empty mono">Belum ada transmisi.<span>KIRIM PESAN PERTAMA</span></div>';
-      return;
-    }
-    const wasAtBottom = feed.scrollTop + feed.clientHeight >= feed.scrollHeight - 40;
-    feed.innerHTML = list.map(m => {
-      const mine = m.sender === currentUser;
-      return `<div class="msg ${mine ? 'me' : ''}" data-id="${escapeHtml(m.id || '')}">
-        <div class="meta"><span class="callsign">${escapeHtml(m.sender)}</span><span>${fmtTime(m.ts)}</span></div>
-        <div class="bubble">${escapeHtml(m.text)}</div>
-      </div>`;
-    }).join('');
-    if(wasAtBottom || lastRenderedCount === list.length){
-      feed.scrollTop = feed.scrollHeight;
-    }
   }
 
   function escapeHtml(str){
@@ -289,65 +403,188 @@
     div.textContent = str;
     return div.innerHTML;
   }
-
-  async function pollMessages(){
-    const list = await getMessages();
-    renderMessages(list);
+  function fmtTime(ts){
+    return new Date(ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  }
+  function initials(id){
+    return (id || '?').trim().slice(0, 2).toUpperCase();
   }
 
-  function startPolling(){
-    pollMessages();
-    pollTimer = setInterval(pollMessages, 2500);
+  function showError(box, text){
+    box.textContent = text;
+    box.classList.add('show');
   }
-  function stopPolling(){
-    if(pollTimer) clearInterval(pollTimer);
+  function clearBox(box){
+    box.textContent = '';
+    box.classList.remove('show');
   }
 
+  // ---------------- LOGIN ----------------
   async function handleLogin(){
-    clearError();
+    clearBox(errorBox);
     const id = idInput.value.trim();
     const pass = passInput.value;
-    if(!id || !pass){
-      showError('ID dan password wajib diisi.');
-      return;
-    }
+    if (!id || !pass){ showError(errorBox, 'ID dan password wajib diisi.'); return; }
+
     loginBtn.disabled = true;
     loginBtn.textContent = 'MEMERIKSA…';
     try{
-      const users = await getUsers();
-      if(users[id] !== undefined){
-        if(users[id] !== pass){
-          showError('Password salah untuk ID ini.');
-          loginBtn.disabled = false;
-          loginBtn.textContent = 'MASUK / DAFTAR';
-          return;
+      const admin = await ensureAdmin();
+      if (id === admin.id){
+        if (pass !== admin.password){
+          showError(errorBox, 'Password admin salah.');
+        } else {
+          currentUser = id; isAdmin = true;
+          idInput.value = ''; passInput.value = '';
+          openAdminScreen();
         }
       } else {
-        users[id] = pass;
-        await saveUsers(users);
+        const users = await getUsers();
+        if (!(id in users)){
+          showError(errorBox, 'ID tidak ditemukan. Minta admin membuatkan akun untuk Anda.');
+        } else if (users[id] !== pass){
+          showError(errorBox, 'Password salah.');
+        } else {
+          currentUser = id; isAdmin = false;
+          idInput.value = ''; passInput.value = '';
+          openContactScreen();
+        }
       }
-      currentUser = id;
-      whoAmI.textContent = id.toUpperCase();
-      loginScreen.style.display = 'none';
-      chatScreen.style.display = 'flex';
-      lastRenderedCount = -1;
-      startPolling();
-    }catch(e){
-      showError('Terjadi kesalahan. Coba lagi.');
+    } catch(e){
+      showError(errorBox, 'Terjadi kesalahan saat memeriksa akun. Coba lagi.');
     }
     loginBtn.disabled = false;
-    loginBtn.textContent = 'MASUK / DAFTAR';
+    loginBtn.textContent = 'MASUK';
   }
 
+  // ---------------- ADMIN ----------------
+  async function openAdminScreen(){
+    showScreen(adminScreen);
+    await renderUserList();
+  }
+  async function renderUserList(){
+    const users = await getUsers();
+    const ids = Object.keys(users);
+    if (ids.length === 0){
+      userList.innerHTML = '<div class="empty mono">Belum ada akun.<span>BUAT AKUN PERTAMA DI ATAS</span></div>';
+      return;
+    }
+    userList.innerHTML = ids.map(id => `
+      <div class="user-row">
+        <span class="uid">${escapeHtml(id)}</span>
+        <button class="btn-danger mono" data-remove="${escapeHtml(id)}">HAPUS</button>
+      </div>
+    `).join('');
+    userList.querySelectorAll('[data-remove]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-remove');
+        clearBox(adminErrorBox); clearBox(adminSuccessBox);
+        const users = await getUsers();
+        delete users[id];
+        await saveUsers(users);
+        showError(adminSuccessBox, `Akun "${id}" dihapus.`);
+        adminSuccessBox.classList.remove('error'); adminSuccessBox.classList.add('success','show');
+        await renderUserList();
+      });
+    });
+  }
+  async function handleAddUser(){
+    clearBox(adminErrorBox); clearBox(adminSuccessBox);
+    const id = newIdInput.value.trim();
+    const pass = newPassInput.value.trim();
+    if (!id || !pass){ showError(adminErrorBox, 'ID dan password baru wajib diisi.'); return; }
+    const admin = await ensureAdmin();
+    if (id === admin.id){ showError(adminErrorBox, 'ID itu dipakai admin, pilih ID lain.'); return; }
+    const users = await getUsers();
+    if (id in users){ showError(adminErrorBox, 'ID sudah dipakai akun lain.'); return; }
+    addUserBtn.disabled = true;
+    users[id] = pass;
+    const ok = await saveUsers(users);
+    addUserBtn.disabled = false;
+    if (!ok){ showError(adminErrorBox, 'Gagal menyimpan akun, coba lagi.'); return; }
+    newIdInput.value = ''; newPassInput.value = '';
+    showError(adminSuccessBox, `Akun "${id}" berhasil dibuat.`);
+    adminSuccessBox.classList.add('success','show');
+    await renderUserList();
+  }
+
+  // ---------------- CONTACTS ----------------
+  async function openContactScreen(){
+    showScreen(contactScreen);
+    contactWhoAmI.textContent = currentUser.toUpperCase();
+    await renderContactList();
+  }
+  async function renderContactList(){
+    const users = await getUsers();
+    const others = Object.keys(users).filter(id => id !== currentUser);
+    if (others.length === 0){
+      contactList.innerHTML = '<div class="empty mono">Belum ada kontak lain.<span>MINTA ADMIN MEMBUAT AKUN TEMAN ANDA</span></div>';
+      return;
+    }
+    contactList.innerHTML = others.map(id => `
+      <div class="contact-row" data-contact="${escapeHtml(id)}">
+        <div class="avatar">${escapeHtml(initials(id))}</div>
+        <div>
+          <div class="contact-name">${escapeHtml(id)}</div>
+          <div class="contact-hint mono">KETUK UNTUK MENGOBROL PRIBADI</div>
+        </div>
+      </div>
+    `).join('');
+    contactList.querySelectorAll('[data-contact]').forEach(row => {
+      row.addEventListener('click', () => openChatWith(row.getAttribute('data-contact')));
+    });
+  }
+
+  // ---------------- PRIVATE CHAT ----------------
+  function openChatWith(contactId){
+    activeContact = contactId;
+    chatWithName.textContent = contactId.toUpperCase();
+    lastRenderedCount = -1;
+    showScreen(chatScreen);
+    startPolling();
+  }
+  function renderMessages(list){
+    if (list.length === lastRenderedCount) return;
+    lastRenderedCount = list.length;
+    if (list.length === 0){
+      feed.innerHTML = '<div class="empty mono">Belum ada pesan.<span>MULAI OBROLAN INI</span></div>';
+      return;
+    }
+    const wasAtBottom = feed.scrollTop + feed.clientHeight >= feed.scrollHeight - 40;
+    feed.innerHTML = list.map(m => {
+      const mine = m.sender === currentUser;
+      return `<div class="msg ${mine ? 'me' : ''}" data-id="${escapeHtml(m.id || '')}">
+        <div class="meta"><span>${escapeHtml(mine ? 'Anda' : m.sender)}</span><span>${fmtTime(m.ts)}</span></div>
+        <div class="bubble">${escapeHtml(m.text)}</div>
+      </div>`;
+    }).join('');
+    if (wasAtBottom) feed.scrollTop = feed.scrollHeight;
+  }
+  async function pollMessages(){
+    if (!activeContact) return;
+    const list = await getMessages(currentUser, activeContact);
+    renderMessages(list);
+  }
+  function startPolling(){
+    stopPolling();
+    pollMessages();
+    pollTimer = setInterval(pollMessages, 2000);
+  }
+  function stopPolling(){
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+  }
   async function handleSend(){
     const text = msgInput.value.trim();
-    if(!text || !currentUser) return;
+    if (!text || !currentUser || !activeContact) return;
     sendBtn.disabled = true;
     sendBtn.textContent = '…';
     const newMsg = { id: uid(), sender: currentUser, text: text, ts: Date.now() };
-    const ok = await appendMessageSafely(newMsg);
-    if(!ok){
-      showComposerError('Pesan gagal terkirim, coba lagi.');
+    const ok = await appendMessageSafely(currentUser, activeContact, newMsg);
+    if (!ok){
+      msgInput.style.borderColor = 'var(--danger)';
+      msgInput.placeholder = 'Pesan gagal terkirim, coba lagi';
+      setTimeout(() => { msgInput.style.borderColor = ''; msgInput.placeholder = 'Ketik pesan…'; }, 2500);
     } else {
       msgInput.value = '';
     }
@@ -358,33 +595,35 @@
     msgInput.focus();
   }
 
-  function showComposerError(text){
-    msgInput.style.borderColor = 'var(--danger)';
-    msgInput.placeholder = text;
-    setTimeout(() => {
-      msgInput.style.borderColor = '';
-      msgInput.placeholder = 'Ketik pesan…';
-    }, 2500);
-  }
-
-  function handleLogout(){
+  // ---------------- LOGOUT / NAV ----------------
+  function fullLogout(){
     stopPolling();
-    currentUser = null;
-    lastRenderedCount = -1;
-    idInput.value = '';
-    passInput.value = '';
-    msgInput.value = '';
-    clearError();
-    chatScreen.style.display = 'none';
-    loginScreen.style.display = 'block';
+    currentUser = null; isAdmin = false; activeContact = null; lastRenderedCount = -1;
+    idInput.value = ''; passInput.value = '';
+    clearBox(errorBox);
+    showScreen(loginScreen);
   }
 
   loginBtn.addEventListener('click', handleLogin);
-  passInput.addEventListener('keydown', e => { if(e.key === 'Enter') handleLogin(); });
-  idInput.addEventListener('keydown', e => { if(e.key === 'Enter') passInput.focus(); });
+  passInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+  idInput.addEventListener('keydown', e => { if (e.key === 'Enter') passInput.focus(); });
+
+  addUserBtn.addEventListener('click', handleAddUser);
+  newPassInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleAddUser(); });
+  adminLogoutBtn.addEventListener('click', fullLogout);
+
+  contactLogoutBtn.addEventListener('click', fullLogout);
+
+  backBtn.addEventListener('click', () => { stopPolling(); activeContact = null; showScreen(contactScreen); renderContactList(); });
   sendBtn.addEventListener('click', handleSend);
-  msgInput.addEventListener('keydown', e => { if(e.key === 'Enter') handleSend(); });
-  logoutBtn.addEventListener('click', handleLogout);
+  msgInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
+
+  // ---------------- INIT ----------------
+  (async function init(){
+    if (!checkStorageAvailable()) return;
+    await ensureAdmin();
+    showScreen(loginScreen);
+  })();
 })();
 </script>
 </body>
