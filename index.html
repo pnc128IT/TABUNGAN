@@ -589,6 +589,60 @@
             padding: 0 18px;
         }
 
+        /* ---------- toast pop up ---------- */
+        #toastContainer {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 280px;
+        }
+
+        .toast {
+            background: var(--panel);
+            border: 1px solid var(--amber);
+            border-radius: 10px;
+            padding: 10px 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+            cursor: pointer;
+            animation: toastIn .2s ease;
+        }
+
+        .toast:hover {
+            border-color: var(--mint);
+        }
+
+        .toast .t-name {
+            font-weight: 700;
+            font-size: 11px;
+            color: var(--amber);
+            margin-bottom: 3px;
+            letter-spacing: .04em;
+        }
+
+        .toast .t-text {
+            font-size: 13px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
         @media (max-width:480px) {
             .panel {
                 padding: 22px;
@@ -597,11 +651,19 @@
             .feed {
                 height: 56vh;
             }
+
+            #toastContainer {
+                left: 16px;
+                right: 16px;
+                max-width: none;
+            }
         }
     </style>
 </head>
 
 <body>
+
+    <div id="toastContainer"></div>
 
     <!-- LOGIN -->
     <div class="app" id="loginScreen">
@@ -622,7 +684,8 @@
             <div class="error mono" id="errorBox"></div>
             <button id="loginBtn" class="mono">MASUK</button>
             <div class="hint">Akun sudah ditentukan lewat kode aplikasi (lihat bagian ACCOUNTS di source). Admin masuk
-                dengan ID <b id="adminIdHint"></b>. Tidak perlu setup server apa pun — bisa langsung dipakai.</div>
+                dengan ID <b id="adminIdHint"></b>. Saat masuk, browser akan minta izin notifikasi — izinkan supaya
+                pesan masuk memicu pop up &amp; bunyi.</div>
         </div>
     </div>
 
@@ -670,7 +733,8 @@
             <button class="icon-btn logout mono" id="contactLogoutBtn">KELUAR</button>
         </div>
         <div class="body-panel" id="contactList"></div>
-        <div class="footer-bar mono">OBROLAN BERSIFAT PRIBADI — HANYA ANTARA ANDA &amp; KONTAK TERPILIH</div>
+        <div class="footer-bar mono">OBROLAN BERSIFAT PRIBADI — HANYA ANTARA ANDA &amp; KONTAK TERPILIH. NOTIFIKASI
+            TETAP AKTIF UNTUK SEMUA KONTAK DI LAYAR INI.</div>
     </div>
 
     <!-- PRIVATE CHAT -->
@@ -693,175 +757,242 @@
     </div>
 
     <script>
-        (function(){
-  // =====================================================================
-  // KONFIGURASI AKUN — HANYA ADMIN (Anda) YANG MENGEDIT BAGIAN INI.
-  // Format: 'id': 'password'
-  // Tambahkan baris baru untuk membuat akun baru, lalu simpan file ini
-  // dan bagikan ulang ke pengguna. Pengguna biasa TIDAK bisa mendaftar
-  // sendiri lewat aplikasi.
-  // =====================================================================
-  const ADMIN_ID = 'admin';
-  const ADMIN_PASSWORD = 'admin123'; // ganti ini agar lebih aman
-  const ACCOUNTS = {
-    'pnc20': 'pnc123456',
-    'diah1': 'diah123'
-  };
-  // Salt rahasia dipakai supaya nama "kanal" pesan sulit ditebak orang lain.
-  // Ganti bebas jika ingin membuat kanal baru (akun lama tetap bisa login,
-  // hanya riwayat percakapan lama jadi tidak terhubung ke kanal baru).
-  const SECRET_SALT = 'ubah-rahasia-ini-8823';
-  // =====================================================================
+        (function () {
+            // =====================================================================
+            // KONFIGURASI AKUN — HANYA ADMIN (Anda) YANG MENGEDIT BAGIAN INI.
+            // Format: 'id': 'password'
+            // Tambahkan baris baru untuk membuat akun baru, lalu simpan file ini
+            // dan bagikan ulang ke pengguna. Pengguna biasa TIDAK bisa mendaftar
+            // sendiri lewat aplikasi.
+            // =====================================================================
+            const ADMIN_ID = 'admin';
+            const ADMIN_PASSWORD = 'admin123'; // ganti ini agar lebih aman
+            const ACCOUNTS = {
+                'pnc20': 'pnc123456',
+                'diah1': 'diah123'
+            };
+            // Salt rahasia dipakai supaya nama "kanal" pesan sulit ditebak orang lain.
+            // Ganti bebas jika ingin membuat kanal baru (akun lama tetap bisa login,
+            // hanya riwayat percakapan lama jadi tidak terhubung ke kanal baru).
+            const SECRET_SALT = 'ubah-rahasia-ini-8823';
+            // =====================================================================
 
-  const NTFY_BASE = 'https://ntfy.sh';
-  let currentUser = null;
-  let isAdmin = false;
-  let activeContact = null;
-  let sessionAccounts = Object.assign({}, ACCOUNTS); // akun tambahan admin (sesi ini saja)
-  let eventSource = null;
-  let renderedIds = new Set();
-  let messageBuffer = [];
+            const NTFY_BASE = 'https://ntfy.sh';
+            let currentUser = null;
+            let isAdmin = false;
+            let activeContact = null;
+            let sessionAccounts = Object.assign({}, ACCOUNTS); // akun tambahan admin (sesi ini saja)
+            let eventSource = null;
+            let renderedIds = new Set();
+            let messageBuffer = [];
 
-  const loginScreen = document.getElementById('loginScreen');
-  const adminScreen = document.getElementById('adminScreen');
-  const contactScreen = document.getElementById('contactScreen');
-  const chatScreen = document.getElementById('chatScreen');
+            // ---- notifikasi: suara + pop up ----
+            let audioCtx = null;
+            let globalListeners = {};   // contactId -> EventSource (dengar latar belakang)
+            let globalSeenIds = new Set();
 
-  const idInput = document.getElementById('idInput');
-  const passInput = document.getElementById('passInput');
-  const errorBox = document.getElementById('errorBox');
-  const loginBtn = document.getElementById('loginBtn');
-  const adminIdHint = document.getElementById('adminIdHint');
+            const toastContainer = document.getElementById('toastContainer');
 
-  const newIdInput = document.getElementById('newIdInput');
-  const newPassInput = document.getElementById('newPassInput');
-  const addUserBtn = document.getElementById('addUserBtn');
-  const adminErrorBox = document.getElementById('adminErrorBox');
-  const adminSuccessBox = document.getElementById('adminSuccessBox');
-  const userList = document.getElementById('userList');
-  const adminLogoutBtn = document.getElementById('adminLogoutBtn');
-  const configOutput = document.getElementById('configOutput');
-  const copyConfigBtn = document.getElementById('copyConfigBtn');
+            const loginScreen = document.getElementById('loginScreen');
+            const adminScreen = document.getElementById('adminScreen');
+            const contactScreen = document.getElementById('contactScreen');
+            const chatScreen = document.getElementById('chatScreen');
 
-  const contactWhoAmI = document.getElementById('contactWhoAmI');
-  const contactList = document.getElementById('contactList');
-  const contactLogoutBtn = document.getElementById('contactLogoutBtn');
+            const idInput = document.getElementById('idInput');
+            const passInput = document.getElementById('passInput');
+            const errorBox = document.getElementById('errorBox');
+            const loginBtn = document.getElementById('loginBtn');
+            const adminIdHint = document.getElementById('adminIdHint');
 
-  const backBtn = document.getElementById('backBtn');
-  const chatWithName = document.getElementById('chatWithName');
-  const feed = document.getElementById('feed');
-  const msgInput = document.getElementById('msgInput');
-  const sendBtn = document.getElementById('sendBtn');
-  const connDot = document.getElementById('connDot');
-  const connLabel = document.getElementById('connLabel');
+            const newIdInput = document.getElementById('newIdInput');
+            const newPassInput = document.getElementById('newPassInput');
+            const addUserBtn = document.getElementById('addUserBtn');
+            const adminErrorBox = document.getElementById('adminErrorBox');
+            const adminSuccessBox = document.getElementById('adminSuccessBox');
+            const userList = document.getElementById('userList');
+            const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+            const configOutput = document.getElementById('configOutput');
+            const copyConfigBtn = document.getElementById('copyConfigBtn');
 
-  adminIdHint.textContent = ADMIN_ID;
+            const contactWhoAmI = document.getElementById('contactWhoAmI');
+            const contactList = document.getElementById('contactList');
+            const contactLogoutBtn = document.getElementById('contactLogoutBtn');
 
-  function showScreen(el){
-    [loginScreen, adminScreen, contactScreen, chatScreen].forEach(s => s.style.display = 'none');
-    el.style.display = (el === loginScreen) ? 'block' : 'flex';
-  }
-  function showError(box, text){ box.textContent = text; box.classList.remove('success'); box.classList.add('error','show'); }
-  function showSuccess(box, text){ box.textContent = text; box.classList.remove('error'); box.classList.add('success','show'); }
-  function clearBox(box){ box.textContent = ''; box.classList.remove('show'); }
-  function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
-  function fmtTime(ts){ return new Date(ts).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }); }
-  function initials(id){ return (id || '?').trim().slice(0,2).toUpperCase(); }
-  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+            const backBtn = document.getElementById('backBtn');
+            const chatWithName = document.getElementById('chatWithName');
+            const feed = document.getElementById('feed');
+            const msgInput = document.getElementById('msgInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const connDot = document.getElementById('connDot');
+            const connLabel = document.getElementById('connLabel');
 
-  function hashStr(s){
-    let h = 5381;
-    for(let i=0;i<s.length;i++){ h = ((h*33) ^ s.charCodeAt(i)) >>> 0; }
-    return h.toString(16);
-  }
-  function topicFor(a, b){
-    const pair = [a,b].sort().join('|');
-    return 'sinyal8823-' + hashStr(pair + '::' + SECRET_SALT);
-  }
+            adminIdHint.textContent = ADMIN_ID;
 
-  // ---------------- LOGIN ----------------
-  function handleLogin(){
-    clearBox(errorBox);
-    const id = idInput.value.trim();
-    const pass = passInput.value;
-    if (!id || !pass){ showError(errorBox, 'ID dan password wajib diisi.'); return; }
+            function showScreen(el) {
+                [loginScreen, adminScreen, contactScreen, chatScreen].forEach(s => s.style.display = 'none');
+                el.style.display = (el === loginScreen) ? 'block' : 'flex';
+            }
+            function showError(box, text) { box.textContent = text; box.classList.remove('success'); box.classList.add('error', 'show'); }
+            function showSuccess(box, text) { box.textContent = text; box.classList.remove('error'); box.classList.add('success', 'show'); }
+            function clearBox(box) { box.textContent = ''; box.classList.remove('show'); }
+            function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+            function fmtTime(ts) { return new Date(ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }); }
+            function initials(id) { return (id || '?').trim().slice(0, 2).toUpperCase(); }
+            function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 
-    if (id === ADMIN_ID){
-      if (pass !== ADMIN_PASSWORD){ showError(errorBox, 'Password admin salah.'); return; }
-      currentUser = id; isAdmin = true;
-      idInput.value=''; passInput.value='';
-      openAdminScreen();
-      return;
-    }
-    if (!(id in sessionAccounts)){
-      showError(errorBox, 'ID tidak ditemukan. Minta admin menambahkan akun untuk Anda.');
-      return;
-    }
-    if (sessionAccounts[id] !== pass){
-      showError(errorBox, 'Password salah.');
-      return;
-    }
-    currentUser = id; isAdmin = false;
-    idInput.value=''; passInput.value='';
-    openContactScreen();
-  }
+            function hashStr(s) {
+                let h = 5381;
+                for (let i = 0; i < s.length; i++) { h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; }
+                return h.toString(16);
+            }
+            function topicFor(a, b) {
+                const pair = [a, b].sort().join('|');
+                return 'sinyal8823-' + hashStr(pair + '::' + SECRET_SALT);
+            }
 
-  // ---------------- ADMIN ----------------
-  function openAdminScreen(){
-    showScreen(adminScreen);
-    renderUserList();
-    renderConfigOutput();
-  }
-  function renderUserList(){
-    const ids = Object.keys(sessionAccounts);
-    if (ids.length === 0){
-      userList.innerHTML = '<div class="empty mono">Belum ada akun.<span>TAMBAHKAN DI ATAS</span></div>';
-      return;
-    }
-    userList.innerHTML = ids.map(id => `
+            // ---------------- NOTIFIKASI: SUARA ----------------
+            function unlockAudio() {
+                try {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                } catch (e) { /* browser tidak mendukung Web Audio, abaikan */ }
+            }
+            function playBeep() {
+                try {
+                    if (!audioCtx) return;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = 880;
+                    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.28, audioCtx.currentTime + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.36);
+                } catch (e) { /* abaikan jika audio diblokir browser */ }
+            }
+
+            // ---------------- NOTIFIKASI: POP UP SISTEM (OS) ----------------
+            function requestNotifyPermission() {
+                try {
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission().catch(() => { });
+                    }
+                } catch (e) { /* tidak didukung, abaikan */ }
+            }
+            function showOsNotification(title, body) {
+                try {
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification(title, { body: body });
+                    }
+                } catch (e) { /* abaikan jika gagal */ }
+            }
+
+            // ---------------- NOTIFIKASI: POP UP DALAM APLIKASI (TOAST) ----------------
+            function showToast(contactId, text) {
+                const el = document.createElement('div');
+                el.className = 'toast mono';
+                el.innerHTML = `<div class="t-name">PESAN DARI ${escapeHtml(contactId.toUpperCase())}</div><div class="t-text">${escapeHtml(text)}</div>`;
+                el.addEventListener('click', () => { el.remove(); openChatWith(contactId); });
+                toastContainer.appendChild(el);
+                setTimeout(() => { el.remove(); }, 4500);
+            }
+
+            function notifyIncoming(contactId, text) {
+                playBeep();
+                showToast(contactId, text);
+                if (document.hidden || !document.hasFocus()) {
+                    showOsNotification(contactId.toUpperCase(), text);
+                }
+            }
+
+            // ---------------- LOGIN ----------------
+            function handleLogin() {
+                unlockAudio(); // buka izin audio selagi masih dalam gestur klik pengguna
+                clearBox(errorBox);
+                const id = idInput.value.trim();
+                const pass = passInput.value;
+                if (!id || !pass) { showError(errorBox, 'ID dan password wajib diisi.'); return; }
+
+                if (id === ADMIN_ID) {
+                    if (pass !== ADMIN_PASSWORD) { showError(errorBox, 'Password admin salah.'); return; }
+                    currentUser = id; isAdmin = true;
+                    idInput.value = ''; passInput.value = '';
+                    openAdminScreen();
+                    return;
+                }
+                if (!(id in sessionAccounts)) {
+                    showError(errorBox, 'ID tidak ditemukan. Minta admin menambahkan akun untuk Anda.');
+                    return;
+                }
+                if (sessionAccounts[id] !== pass) {
+                    showError(errorBox, 'Password salah.');
+                    return;
+                }
+                currentUser = id; isAdmin = false;
+                idInput.value = ''; passInput.value = '';
+                requestNotifyPermission();
+                openContactScreen();
+            }
+
+            // ---------------- ADMIN ----------------
+            function openAdminScreen() {
+                showScreen(adminScreen);
+                renderUserList();
+                renderConfigOutput();
+            }
+            function renderUserList() {
+                const ids = Object.keys(sessionAccounts);
+                if (ids.length === 0) {
+                    userList.innerHTML = '<div class="empty mono">Belum ada akun.<span>TAMBAHKAN DI ATAS</span></div>';
+                    return;
+                }
+                userList.innerHTML = ids.map(id => `
       <div class="user-row">
         <span class="uid">${escapeHtml(id)}</span>
         <span class="tag mono">${ACCOUNTS[id] !== undefined ? 'PERMANEN' : 'SESI INI SAJA'}</span>
       </div>
     `).join('');
-  }
-  function renderConfigOutput(){
-    const lines = Object.keys(sessionAccounts).map(id => `    '${id.replace(/'/g,"")}': '${sessionAccounts[id].replace(/'/g,"")}'`);
-    configOutput.value = 'const ACCOUNTS = {\n' + lines.join(',\n') + '\n  };';
-  }
-  function handleAddUser(){
-    clearBox(adminErrorBox); clearBox(adminSuccessBox);
-    const id = newIdInput.value.trim();
-    const pass = newPassInput.value.trim();
-    if (!id || !pass){ showError(adminErrorBox, 'ID dan password baru wajib diisi.'); return; }
-    if (id === ADMIN_ID){ showError(adminErrorBox, 'ID itu dipakai admin, pilih ID lain.'); return; }
-    if (id in sessionAccounts){ showError(adminErrorBox, 'ID sudah dipakai akun lain.'); return; }
-    sessionAccounts[id] = pass;
-    newIdInput.value=''; newPassInput.value='';
-    showSuccess(adminSuccessBox, `Akun "${id}" ditambahkan untuk sesi ini. Salin kode di bawah agar permanen.`);
-    renderUserList();
-    renderConfigOutput();
-  }
-  copyConfigBtn.addEventListener('click', () => {
-    configOutput.select();
-    document.execCommand('copy');
-    copyConfigBtn.textContent = 'TERSALIN!';
-    setTimeout(() => { copyConfigBtn.textContent = 'SALIN KODE'; }, 1500);
-  });
+            }
+            function renderConfigOutput() {
+                const lines = Object.keys(sessionAccounts).map(id => `    '${id.replace(/'/g, "")}': '${sessionAccounts[id].replace(/'/g, "")}'`);
+                configOutput.value = 'const ACCOUNTS = {\n' + lines.join(',\n') + '\n  };';
+            }
+            function handleAddUser() {
+                clearBox(adminErrorBox); clearBox(adminSuccessBox);
+                const id = newIdInput.value.trim();
+                const pass = newPassInput.value.trim();
+                if (!id || !pass) { showError(adminErrorBox, 'ID dan password baru wajib diisi.'); return; }
+                if (id === ADMIN_ID) { showError(adminErrorBox, 'ID itu dipakai admin, pilih ID lain.'); return; }
+                if (id in sessionAccounts) { showError(adminErrorBox, 'ID sudah dipakai akun lain.'); return; }
+                sessionAccounts[id] = pass;
+                newIdInput.value = ''; newPassInput.value = '';
+                showSuccess(adminSuccessBox, `Akun "${id}" ditambahkan untuk sesi ini. Salin kode di bawah agar permanen.`);
+                renderUserList();
+                renderConfigOutput();
+            }
+            copyConfigBtn.addEventListener('click', () => {
+                configOutput.select();
+                document.execCommand('copy');
+                copyConfigBtn.textContent = 'TERSALIN!';
+                setTimeout(() => { copyConfigBtn.textContent = 'SALIN KODE'; }, 1500);
+            });
 
-  // ---------------- CONTACTS ----------------
-  function openContactScreen(){
-    showScreen(contactScreen);
-    contactWhoAmI.textContent = currentUser.toUpperCase();
-    renderContactList();
-  }
-  function renderContactList(){
-    const others = Object.keys(sessionAccounts).filter(id => id !== currentUser);
-    if (others.length === 0){
-      contactList.innerHTML = '<div class="empty mono">Belum ada kontak lain.<span>MINTA ADMIN MENAMBAHKAN AKUN TEMAN ANDA</span></div>';
-      return;
-    }
-    contactList.innerHTML = others.map(id => `
+            // ---------------- CONTACTS ----------------
+            function openContactScreen() {
+                showScreen(contactScreen);
+                contactWhoAmI.textContent = currentUser.toUpperCase();
+                renderContactList();
+                startGlobalListening();
+            }
+            function renderContactList() {
+                const others = Object.keys(sessionAccounts).filter(id => id !== currentUser);
+                if (others.length === 0) {
+                    contactList.innerHTML = '<div class="empty mono">Belum ada kontak lain.<span>MINTA ADMIN MENAMBAHKAN AKUN TEMAN ANDA</span></div>';
+                    return;
+                }
+                contactList.innerHTML = others.map(id => `
       <div class="contact-row" data-contact="${escapeHtml(id)}">
         <div class="avatar">${escapeHtml(initials(id))}</div>
         <div>
@@ -870,148 +1001,192 @@
         </div>
       </div>
     `).join('');
-    contactList.querySelectorAll('[data-contact]').forEach(row => {
-      row.addEventListener('click', () => openChatWith(row.getAttribute('data-contact')));
-    });
-  }
+                contactList.querySelectorAll('[data-contact]').forEach(row => {
+                    row.addEventListener('click', () => openChatWith(row.getAttribute('data-contact')));
+                });
+            }
 
-  // ---------------- PRIVATE CHAT (via ntfy.sh, real-time, tanpa setup) ----------------
-  function openChatWith(contactId){
-    activeContact = contactId;
-    chatWithName.textContent = contactId.toUpperCase();
-    messageBuffer = [];
-    renderedIds = new Set();
-    feed.innerHTML = '<div class="empty mono">Memuat riwayat…</div>';
-    setConn(false, 'Menghubungkan…');
-    showScreen(chatScreen);
-    loadHistoryThenSubscribe();
-  }
+            // ---------------- PEMANTAUAN LATAR BELAKANG (untuk notifikasi kontak lain) ----------------
+            function startGlobalListening() {
+                const others = Object.keys(sessionAccounts).filter(id => id !== currentUser);
+                others.forEach(contactId => {
+                    if (contactId === activeContact) return; // sudah ditangani langganan chat utama
+                    if (globalListeners[contactId]) return;   // sudah didengarkan
+                    const topic = topicFor(currentUser, contactId);
+                    try {
+                        const es = new EventSource(`${NTFY_BASE}/${topic}/sse`);
+                        es.onmessage = (evt) => {
+                            const m = parseNtfyLine(evt.data);
+                            if (!m || !m.id || m.sender === currentUser) return;
+                            if (globalSeenIds.has(m.id)) return;
+                            globalSeenIds.add(m.id);
+                            notifyIncoming(contactId, m.text);
+                        };
+                        globalListeners[contactId] = es;
+                    } catch (e) { /* kalau gagal, cukup dilewati; koneksi chat utama tetap jalan saat dibuka */ }
+                });
+            }
+            function stopGlobalListener(contactId) {
+                if (globalListeners[contactId]) { globalListeners[contactId].close(); delete globalListeners[contactId]; }
+            }
+            function stopAllGlobalListeners() {
+                Object.keys(globalListeners).forEach(id => globalListeners[id].close());
+                globalListeners = {};
+            }
 
-  function setConn(ok, label){
-    connLabel.textContent = label;
-    connDot.classList.toggle('off', !ok);
-  }
+            // ---------------- PRIVATE CHAT (via ntfy.sh, real-time, tanpa setup) ----------------
+            function openChatWith(contactId) {
+                stopGlobalListener(contactId); // hindari notifikasi dobel, chat utama yang ambil alih
+                activeContact = contactId;
+                chatWithName.textContent = contactId.toUpperCase();
+                messageBuffer = [];
+                renderedIds = new Set();
+                feed.innerHTML = '<div class="empty mono">Memuat riwayat…</div>';
+                setConn(false, 'Menghubungkan…');
+                showScreen(chatScreen);
+                loadHistoryThenSubscribe();
+            }
 
-  function parseNtfyLine(line){
-    try{
-      const envelope = JSON.parse(line);
-      if (envelope.event !== 'message' || !envelope.message) return null;
-      return JSON.parse(envelope.message);
-    }catch(e){ return null; }
-  }
+            function setConn(ok, label) {
+                connLabel.textContent = label;
+                connDot.classList.toggle('off', !ok);
+            }
 
-  function addMessage(m){
-    if (!m || !m.id || renderedIds.has(m.id)) return;
-    renderedIds.add(m.id);
-    messageBuffer.push(m);
-    messageBuffer.sort((a,b) => a.ts - b.ts);
-    renderMessages();
-  }
+            function parseNtfyLine(line) {
+                try {
+                    const envelope = JSON.parse(line);
+                    if (envelope.event !== 'message' || !envelope.message) return null;
+                    return JSON.parse(envelope.message);
+                } catch (e) { return null; }
+            }
 
-  function renderMessages(){
-    if (messageBuffer.length === 0){
-      feed.innerHTML = '<div class="empty mono">Belum ada pesan.<span>MULAI OBROLAN INI</span></div>';
-      return;
-    }
-    const wasAtBottom = feed.scrollTop + feed.clientHeight >= feed.scrollHeight - 40;
-    feed.innerHTML = messageBuffer.map(m => {
-      const mine = m.sender === currentUser;
-      return `<div class="msg ${mine ? 'me' : ''}">
+            function addMessage(m, isLive) {
+                if (!m || !m.id || renderedIds.has(m.id)) return;
+                renderedIds.add(m.id);
+                messageBuffer.push(m);
+                messageBuffer.sort((a, b) => a.ts - b.ts);
+                renderMessages();
+                // Suara & notifikasi OS hanya untuk pesan BARU yang benar-benar masuk
+                // secara langsung (bukan saat memuat riwayat lama), dan bukan pesan sendiri.
+                if (isLive && m.sender !== currentUser) {
+                    playBeep();
+                    if (document.hidden || !document.hasFocus()) {
+                        showOsNotification(activeContact ? activeContact.toUpperCase() : 'Pesan baru', m.text);
+                    }
+                }
+            }
+
+            function renderMessages() {
+                if (messageBuffer.length === 0) {
+                    feed.innerHTML = '<div class="empty mono">Belum ada pesan.<span>MULAI OBROLAN INI</span></div>';
+                    return;
+                }
+                const wasAtBottom = feed.scrollTop + feed.clientHeight >= feed.scrollHeight - 40;
+                feed.innerHTML = messageBuffer.map(m => {
+                    const mine = m.sender === currentUser;
+                    return `<div class="msg ${mine ? 'me' : ''}">
         <div class="meta"><span>${escapeHtml(mine ? 'Anda' : m.sender)}</span><span>${fmtTime(m.ts)}</span></div>
         <div class="bubble">${escapeHtml(m.text)}</div>
       </div>`;
-    }).join('');
-    if (wasAtBottom) feed.scrollTop = feed.scrollHeight;
-  }
+                }).join('');
+                if (wasAtBottom) feed.scrollTop = feed.scrollHeight;
+            }
 
-  async function loadHistoryThenSubscribe(){
-    const topic = topicFor(currentUser, activeContact);
-    try{
-      const res = await fetch(`${NTFY_BASE}/${topic}/json?poll=1`);
-      if (res.ok){
-        const text = await res.text();
-        text.split('\n').filter(Boolean).forEach(line => {
-          const m = parseNtfyLine(line);
-          if (m) addMessage(m);
-        });
-      }
-    }catch(e){
-      // Riwayat gagal dimuat (mungkin di luar 12 jam cache atau koneksi bermasalah);
-      // tetap lanjut ke langganan real-time.
-    }
-    subscribeLive(topic);
-  }
+            async function loadHistoryThenSubscribe() {
+                const topic = topicFor(currentUser, activeContact);
+                try {
+                    const res = await fetch(`${NTFY_BASE}/${topic}/json?poll=1`);
+                    if (res.ok) {
+                        const text = await res.text();
+                        text.split('\n').filter(Boolean).forEach(line => {
+                            const m = parseNtfyLine(line);
+                            if (m) addMessage(m, false); // riwayat lama: tanpa bunyi/notifikasi
+                        });
+                    }
+                } catch (e) {
+                    // Riwayat gagal dimuat (mungkin di luar 12 jam cache atau koneksi bermasalah);
+                    // tetap lanjut ke langganan real-time.
+                }
+                subscribeLive(topic);
+            }
 
-  function subscribeLive(topic){
-    if (eventSource) eventSource.close();
-    try{
-      eventSource = new EventSource(`${NTFY_BASE}/${topic}/sse`);
-      eventSource.onopen = () => setConn(true, 'Terhubung');
-      eventSource.onmessage = (evt) => {
-        const m = parseNtfyLine(evt.data);
-        if (m) addMessage(m);
-      };
-      eventSource.onerror = () => {
-        setConn(false, 'Koneksi terputus, mencoba lagi…');
-      };
-    }catch(e){
-      setConn(false, 'Gagal terhubung ke server pesan.');
-    }
-  }
+            function subscribeLive(topic) {
+                if (eventSource) eventSource.close();
+                try {
+                    eventSource = new EventSource(`${NTFY_BASE}/${topic}/sse`);
+                    eventSource.onopen = () => setConn(true, 'Terhubung');
+                    eventSource.onmessage = (evt) => {
+                        const m = parseNtfyLine(evt.data);
+                        if (m) addMessage(m, true); // pesan baru: picu bunyi/notifikasi
+                    };
+                    eventSource.onerror = () => {
+                        setConn(false, 'Koneksi terputus, mencoba lagi…');
+                    };
+                } catch (e) {
+                    setConn(false, 'Gagal terhubung ke server pesan.');
+                }
+            }
 
-  function stopSubscription(){
-    if (eventSource){ eventSource.close(); eventSource = null; }
-  }
+            function stopSubscription() {
+                if (eventSource) { eventSource.close(); eventSource = null; }
+            }
 
-  async function handleSend(){
-    const text = msgInput.value.trim();
-    if (!text || !currentUser || !activeContact) return;
-    sendBtn.disabled = true;
-    sendBtn.textContent = '…';
-    const topic = topicFor(currentUser, activeContact);
-    const newMsg = { id: uid(), sender: currentUser, text: text, ts: Date.now() };
-    try{
-      const res = await fetch(`${NTFY_BASE}/${topic}`, { method:'POST', body: JSON.stringify(newMsg) });
-      if (res.ok){
-        addMessage(newMsg); // tampil optimis; SSE akan mengabaikan duplikatnya
-        msgInput.value = '';
-      } else {
-        throw new Error('status ' + res.status);
-      }
-    }catch(e){
-      msgInput.style.borderColor = 'var(--danger)';
-      msgInput.placeholder = 'Gagal terkirim, cek koneksi internet & coba lagi';
-      setTimeout(() => { msgInput.style.borderColor=''; msgInput.placeholder='Ketik pesan…'; }, 3000);
-    }
-    sendBtn.disabled = false;
-    sendBtn.textContent = 'KIRIM';
-    msgInput.focus();
-  }
+            async function handleSend() {
+                const text = msgInput.value.trim();
+                if (!text || !currentUser || !activeContact) return;
+                sendBtn.disabled = true;
+                sendBtn.textContent = '…';
+                const topic = topicFor(currentUser, activeContact);
+                const newMsg = { id: uid(), sender: currentUser, text: text, ts: Date.now() };
+                try {
+                    const res = await fetch(`${NTFY_BASE}/${topic}`, { method: 'POST', body: JSON.stringify(newMsg) });
+                    if (res.ok) {
+                        addMessage(newMsg, false); // tampil optimis, tanpa bunyi untuk pesan sendiri
+                        msgInput.value = '';
+                    } else {
+                        throw new Error('status ' + res.status);
+                    }
+                } catch (e) {
+                    msgInput.style.borderColor = 'var(--danger)';
+                    msgInput.placeholder = 'Gagal terkirim, cek koneksi internet & coba lagi';
+                    setTimeout(() => { msgInput.style.borderColor = ''; msgInput.placeholder = 'Ketik pesan…'; }, 3000);
+                }
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'KIRIM';
+                msgInput.focus();
+            }
 
-  // ---------------- LOGOUT / NAV ----------------
-  function fullLogout(){
-    stopSubscription();
-    currentUser = null; isAdmin = false; activeContact = null;
-    idInput.value=''; passInput.value='';
-    clearBox(errorBox);
-    showScreen(loginScreen);
-  }
+            // ---------------- LOGOUT / NAV ----------------
+            function fullLogout() {
+                stopSubscription();
+                stopAllGlobalListeners();
+                currentUser = null; isAdmin = false; activeContact = null;
+                idInput.value = ''; passInput.value = '';
+                clearBox(errorBox);
+                showScreen(loginScreen);
+            }
 
-  loginBtn.addEventListener('click', handleLogin);
-  passInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
-  idInput.addEventListener('keydown', e => { if (e.key === 'Enter') passInput.focus(); });
+            loginBtn.addEventListener('click', handleLogin);
+            passInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+            idInput.addEventListener('keydown', e => { if (e.key === 'Enter') passInput.focus(); });
 
-  addUserBtn.addEventListener('click', handleAddUser);
-  newPassInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleAddUser(); });
-  adminLogoutBtn.addEventListener('click', fullLogout);
-  contactLogoutBtn.addEventListener('click', fullLogout);
+            addUserBtn.addEventListener('click', handleAddUser);
+            newPassInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleAddUser(); });
+            adminLogoutBtn.addEventListener('click', fullLogout);
+            contactLogoutBtn.addEventListener('click', fullLogout);
 
-  backBtn.addEventListener('click', () => { stopSubscription(); activeContact = null; showScreen(contactScreen); renderContactList(); });
-  sendBtn.addEventListener('click', handleSend);
-  msgInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
+            backBtn.addEventListener('click', () => {
+                stopSubscription();
+                activeContact = null;
+                showScreen(contactScreen);
+                renderContactList();
+                startGlobalListening(); // lanjutkan pemantauan latar belakang untuk kontak yang tadi dibuka
+            });
+            sendBtn.addEventListener('click', handleSend);
+            msgInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
 
-  showScreen(loginScreen);
-})();
+            showScreen(loginScreen);
+        })();
     </script>
 </body>
 
